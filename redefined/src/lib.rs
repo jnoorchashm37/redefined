@@ -4,6 +4,8 @@
 #[cfg(test)]
 mod tests;
 
+pub use redefined_derive::*;
+
 pub trait RedefinedConvert<O> {
     fn from_source(src: O) -> Self;
 
