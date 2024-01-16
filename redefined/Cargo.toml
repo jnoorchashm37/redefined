@@ -1,0 +1,12 @@
+[package]
+name = "redefined"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "redefined"
+
+[dependencies]
+# derive
+redefined-derive = { path = "../redefined-derive" }
+redefined-outside-crate-tests = { path = "./outside-crate" }

@@ -1,0 +1,9 @@
+[package]
+name = "redefined-outside-crate-tests"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "redefined_outside_crate_tests"
+
+[dependencies]

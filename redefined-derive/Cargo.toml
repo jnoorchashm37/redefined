@@ -1,0 +1,14 @@
+[package]
+name = "redefined-derive"
+version = "0.1.0"
+edition = "2021"
+
+
+[lib]
+name = "redefined_derive"
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0.74"
+quote = "1.0.35"
+syn = "2.0.46"

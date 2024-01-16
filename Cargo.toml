@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "redefined",
+    "redefined-derive"
+]
+
+
