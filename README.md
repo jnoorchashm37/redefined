@@ -18,7 +18,7 @@ pub enum ComplexEnumA {
 }
 
 #[derive(Debug, Clone, PartialEq, Redefined)]
-#[redefined(ComplexEnumA)] // define the type converting from
+#[redefined(ComplexEnumA)]
 pub enum ComplexEnumB {
     A(u64),
     B(ComplexStructB), // ComplexStructB defined in our crate and derives `Redefined` from ComplexStructA
