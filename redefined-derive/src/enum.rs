@@ -1,5 +1,5 @@
 use proc_macro2::{Span, TokenStream};
-use quote::quote;
+use quote::{quote, ToTokens};
 
 use syn::{
     self, Data, DataStruct, DeriveInput, Fields, FieldsNamed, FieldsUnnamed, Ident, LitStr, Variant,
@@ -9,16 +9,16 @@ use syn::{Attribute, Error};
 pub fn generate_enum_impl(
     data_enum: &syn::DataEnum,
     target_struct: &Ident,
-    source_struct: &Ident,
+    source_struct: &TokenStream,
 ) -> syn::Result<TokenStream> {
     let variants_to = data_enum.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
-        generate_variant_match(variant, source_struct, target_struct, variant_name, false)
+        generate_variant_match(variant, source_struct, &target_struct.to_token_stream(), variant_name, false)
     });
 
     let variants_from = data_enum.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
-        generate_variant_match(variant, target_struct, source_struct, variant_name, true)
+        generate_variant_match(variant, &target_struct.to_token_stream(), source_struct, variant_name, true)
     });
 
     let gen = quote! {
@@ -42,8 +42,8 @@ pub fn generate_enum_impl(
 
 pub fn generate_variant_match(
     variant: &Variant,
-    source_struct: &Ident,
-    target_struct: &Ident,
+    source_struct: &TokenStream,
+    target_struct: &TokenStream,
     variant_name: &Ident,
     is_backwards: bool,
 ) -> TokenStream {

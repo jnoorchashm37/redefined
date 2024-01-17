@@ -21,3 +21,10 @@ impl NonPubFieldStructA {
         self.p
     }
 }
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct GenericStructA<X, Y> {
+    pub p:    u64,
+    pub d:    X,
+    pub vals: Vec<Y>,
+}

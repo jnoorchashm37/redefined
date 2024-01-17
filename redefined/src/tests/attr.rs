@@ -1,5 +1,5 @@
 use redefined_derive::Redefined;
-use redefined_outside_crate_tests::NonPubFieldStructA;
+use redefined_outside_crate_tests::{GenericStructA, NonPubFieldStructA};
 
 use crate::RedefinedConvert;
 
@@ -12,10 +12,22 @@ pub struct NonPubFieldStructB {
     pub vals: Vec<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Default, Redefined)]
+#[redefined(GenericStructA, generics(K, Z))]
+pub struct GenericStructB<X, Y>
+where
+    X: RedefinedConvert<X>,
+    Y: RedefinedConvert<Y>,
+{
+    pub p:    u64,
+    pub d:    X,
+    pub vals: Vec<Y>,
+}
+
 #[test]
-fn test_struct() {
-    let struct_a = NonPubFieldStructA::default();
-    let struct_b = NonPubFieldStructB::from_source(struct_a.clone());
-    let struct_b_to_a: NonPubFieldStructA = struct_b.to_source();
+fn test_generics() {
+    let struct_a = GenericStructA::default();
+    let struct_b = GenericStructB::from_source(struct_a.clone());
+    let struct_b_to_a: GenericStructA<String, u64> = struct_b.to_source();
     assert_eq!(struct_b_to_a, struct_a);
 }
