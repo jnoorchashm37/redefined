@@ -6,6 +6,12 @@ use syn::DeriveInput;
 
 mod parse;
 
+#[macro_use]
+mod r#enum;
+
+#[macro_use]
+mod r#struct;
+
 #[proc_macro_derive(Redefined, attributes(redefined))]
 pub fn derive_redefined(input: TokenStream) -> TokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);

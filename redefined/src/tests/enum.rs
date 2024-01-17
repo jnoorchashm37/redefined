@@ -33,8 +33,6 @@ pub enum ComplexEnumB {
     C { value: Vec<InsideStruct> },
 }
 
-//remake!(ComplexEnumB, ComplexEnumB2);
-
 #[test]
 fn test_enum() {
     // case 1
