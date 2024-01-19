@@ -17,7 +17,7 @@ Source struct with private field
 #[redefined(NonPubFieldStructA)]
 #[redefined_attr(to_source = "NonPubFieldStructA::new(self.p, self.d, self.vals)")]
 pub struct NonPubFieldStructB {
-    #[redefined_attr(func = "get_p")]
+    #[redefined_attr(func = "src.get_p()")]
     pub p:    u64,
     pub d:    u64,
     pub vals: Vec<String>,

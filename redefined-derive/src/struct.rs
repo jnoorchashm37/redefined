@@ -126,12 +126,14 @@ impl StructField {
             let attr = FIELD_FN
                 .find_type_attr(fields_attrs)
                 .ok_or(syn::Error::new_spanned(&self.ident, "FIELD FN ERROR"))?;
+
             let name_val = attr
                 .meta
                 .require_name_value()
                 .map_err(|_| syn::Error::new_spanned(&attr.meta, "#[redefined_attr(func = \"..\")] must be a Meta::NameValue"))?;
             let func_name = parse_str_expr_into_lit_expr(&name_val.value)?;
-            quote! { #ident: RedefinedConvert::from_source(src.#func_name()), }
+
+            quote! { #ident: RedefinedConvert::from_source(#func_name), }
         } else if fields_attrs.is_empty() {
             if let Some(idx) = self.is_unnamed_idx {
                 let index = syn::Index::from(idx);
