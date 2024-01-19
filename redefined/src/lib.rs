@@ -4,6 +4,8 @@
 #[cfg(test)]
 mod tests;
 
+use std::{collections::HashMap, hash::Hash};
+
 pub use redefined_derive::*;
 
 pub trait RedefinedConvert<O> {
@@ -35,6 +37,26 @@ where
 
     fn to_source(self) -> Vec<T> {
         self.into_iter().map(|val| val.to_source()).collect()
+    }
+}
+
+impl<X, Y, W, Z> RedefinedConvert<HashMap<W, Z>> for HashMap<X, Y>
+where
+    X: RedefinedConvert<W>,
+    Y: RedefinedConvert<Z>,
+    X: Hash + Eq,
+    W: Hash + Eq,
+{
+    fn from_source(item: HashMap<W, Z>) -> Self {
+        item.into_iter()
+            .map(|(a, b)| (X::from_source(a), Y::from_source(b)))
+            .collect()
+    }
+
+    fn to_source(self) -> HashMap<W, Z> {
+        self.into_iter()
+            .map(|(a, b)| (a.to_source(), b.to_source()))
+            .collect()
     }
 }
 
