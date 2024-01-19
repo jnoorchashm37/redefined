@@ -39,7 +39,7 @@ where
 }
 
 #[macro_export]
-macro_rules! self_convert {
+macro_rules! self_convert_with_fixed_size_array {
     ($($val:ident),*) => {
         $(
             impl RedefinedConvert<$val> for $val {
@@ -53,6 +53,23 @@ macro_rules! self_convert {
             }
 
             self_convert_as_generic_slice!($val);
+        )*
+    };
+}
+
+#[macro_export]
+macro_rules! self_convert {
+    ($($val:ident),*) => {
+        $(
+            impl RedefinedConvert<$val> for $val {
+                fn from_source(item: $val) -> Self {
+                    item
+                }
+
+                fn to_source(self) -> $val {
+                    self
+                }
+            }
         )*
     };
 }
@@ -117,9 +134,9 @@ self_convert_tuples!(T1, T2, T3, T4, T5, T6, T7, T8);
 self_convert_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9);
 self_convert_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10);
 
-self_convert!(u8, u16, u32, u64, u128);
-self_convert!(i8, i16, i32, i64, i128);
-self_convert!(f32, f64);
-self_convert!(String, char);
-self_convert!(bool);
+self_convert_with_fixed_size_array!(u8, u16, u32, u64, u128);
+self_convert_with_fixed_size_array!(i8, i16, i32, i64, i128);
+self_convert_with_fixed_size_array!(f32, f64);
+self_convert_with_fixed_size_array!(String, char);
+self_convert_with_fixed_size_array!(bool);
 self_convert_sized!(str);
