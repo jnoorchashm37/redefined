@@ -132,7 +132,7 @@ macro_rules! self_convert_sized {
 #[macro_export]
 macro_rules! self_convert_tuples {
     ($($T:ident),*) => {
-        impl<$($T: RedefinedConvert<$T>),*> RedefinedConvert<($($T,)*)> for ($($T,)*) {
+        impl<$($T),*> RedefinedConvert<($($T,)*)> for ($($T,)*) {
             fn from_source(item: ($($T,)*)) -> Self {
                 item
             }
