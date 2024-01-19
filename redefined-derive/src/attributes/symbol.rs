@@ -9,7 +9,8 @@ pub const _ALL_FIELD_SYMBOLS: [&Symbol; 1] = [&FIELD_FN];
 #[derive(Copy, Clone, PartialEq)]
 pub struct Symbol(pub &'static str);
 
-pub const SOURCE_FN: Symbol = Symbol("to_source");
+pub const TO_SOURCE_FN: Symbol = Symbol("to_source");
+pub const FROM_SOURCE_FN: Symbol = Symbol("from_source");
 pub const FIELD_FN: Symbol = Symbol("func");
 pub const SOURCE_GENERICS: Symbol = Symbol("source_generics");
 

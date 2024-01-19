@@ -2,7 +2,12 @@ use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{self, parse_quote, Data, DataEnum, DataStruct, DeriveInput, Expr, GenericParam, Generics, Ident, LitStr, TypeParam};
 
-use crate::{attributes::symbol::SOURCE_FN, outer::OuterContainer, r#enum::EnumContainer, r#struct::StructContainer};
+use crate::{
+    attributes::symbol::{FROM_SOURCE_FN, TO_SOURCE_FN},
+    outer::OuterContainer,
+    r#enum::EnumContainer,
+    r#struct::StructContainer,
+};
 
 pub fn expand_derive_redefined(input: &DeriveInput) -> syn::Result<TokenStream> {
     let outer = OuterContainer::parse(input.ident.clone(), input.generics.clone(), &input.attrs)?;
@@ -33,13 +38,25 @@ impl Container {
     pub fn parse_container_to_token_stream(&self) -> syn::Result<TokenStream> {
         let source_type = &self.outer.source_type;
         let target_type = &self.outer.target_type;
-        let from_source_tokens = &self.inner.from_source;
+
+        let from_source_tokens = if let Some(func) = self
+            .outer
+            .container_attrs
+            .iter()
+            .find(|attr| attr.symbol == FROM_SOURCE_FN)
+        {
+            let new_func_name = parse_str_expr_into_lit_expr(&func.meta.require_name_value()?.value)?;
+            new_func_name.to_token_stream()
+        } else {
+            let inner_from_source_tokens = &self.inner.from_source;
+            quote! { #inner_from_source_tokens }
+        };
 
         let to_source_tokens = if let Some(func) = self
             .outer
             .container_attrs
             .iter()
-            .find(|attr| attr.symbol == SOURCE_FN)
+            .find(|attr| attr.symbol == TO_SOURCE_FN)
         {
             let new_func_name = parse_str_expr_into_lit_expr(&func.meta.require_name_value()?.value)?;
             new_func_name.to_token_stream()

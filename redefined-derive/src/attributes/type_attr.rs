@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::{self, punctuated::Punctuated, AngleBracketedGenericArguments, Ident, Meta, PathArguments, Token};
 
-use super::symbol::{Symbol, FIELD_FN, SOURCE_FN, SOURCE_GENERICS};
+use super::symbol::{Symbol, FIELD_FN, FROM_SOURCE_FN, SOURCE_GENERICS, TO_SOURCE_FN};
 
 #[derive(Clone)]
 pub struct TypeAttribute {
@@ -46,7 +46,15 @@ impl TypeAttribute {
     }
 
     pub fn try_into_new_source_fn(&self) -> syn::Result<Option<TokenStream>> {
-        if self.symbol == SOURCE_FN {
+        if self.symbol == TO_SOURCE_FN {
+            Ok(Some(self.meta.require_name_value()?.path.to_token_stream()))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn try_from_new_source_fn(&self) -> syn::Result<Option<TokenStream>> {
+        if self.symbol == FROM_SOURCE_FN {
             Ok(Some(self.meta.require_name_value()?.path.to_token_stream()))
         } else {
             Ok(None)
@@ -74,8 +82,11 @@ pub fn parse_attr_meta_into_container(inner_meta: &Punctuated<Meta, Token![,]>) 
     let mut attributes = vec![];
 
     for meta in inner_meta.into_iter() {
-        if meta.path() == SOURCE_FN {
-            attributes.push(TypeAttribute::new(SOURCE_FN, meta.clone()))
+        if meta.path() == FROM_SOURCE_FN {
+            attributes.push(TypeAttribute::new(FROM_SOURCE_FN, meta.clone()))
+        }
+        if meta.path() == TO_SOURCE_FN {
+            attributes.push(TypeAttribute::new(TO_SOURCE_FN, meta.clone()))
         }
         if meta.path() == SOURCE_GENERICS {
             attributes.push(TypeAttribute::new(SOURCE_GENERICS, meta.clone()))
