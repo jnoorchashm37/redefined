@@ -49,7 +49,6 @@ impl Symbol {
     }
 
     pub fn find_type_attr(&self, vals: &[TypeAttribute]) -> Option<TypeAttribute> {
-        vals.iter()
-            .find(|val| &val.symbol == self).cloned()
+        vals.iter().find(|val| &val.symbol == self).cloned()
     }
 }

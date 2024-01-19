@@ -3,6 +3,16 @@ use redefined_outside_crate_tests::NonPubFieldStructA;
 
 use crate::RedefinedConvert;
 
+/*
+
+
+
+
+
+Source struct with private field
+- Uses 'to_source' attribute to create the source struct
+- Calls the 'get_p()' function to get the field for this struct
+*/
 #[derive(Debug, Clone, PartialEq, Default, Redefined)]
 #[redefined(NonPubFieldStructA)]
 #[redefined_attr(to_source = "NonPubFieldStructA::new(self.p, self.d, self.vals)")]

@@ -11,40 +11,61 @@ use crate::{
 };
 
 pub struct StructContainer {
-    pub fields: Vec<StructField>,
+    pub fields:   Vec<StructField>,
+    pub is_named: bool,
 }
 
 impl StructContainer {
     pub fn parse_new(data_struct: &DataStruct) -> syn::Result<Self> {
-        let fields = match &data_struct.fields {
-            Fields::Named(fields_named) => &fields_named.named,
+        let (fields, is_named) = match &data_struct.fields {
+            Fields::Named(fields_named) => (&fields_named.named, true),
+            Fields::Unnamed(fields_unnamed) => (&fields_unnamed.unnamed, false),
             _ => return Err(syn::Error::new_spanned(&data_struct.fields, "Expected a struct with named fields")),
         };
 
-        let struct_fields = fields
-            .iter()
-            .flat_map(|field| {
-                field.ident.as_ref().map(|idt| {
-                    let mut this = StructField::new(idt.clone(), field.clone());
+        let struct_fields = if is_named {
+            fields
+                .iter()
+                .flat_map(|field| {
+                    field.ident.as_ref().map(|idt| {
+                        let mut this = StructField::new(Some(idt.clone()), field.clone(), None);
+                        this.parse_attributes_for_field()?;
+                        Ok(this)
+                    })
+                })
+                .collect::<syn::Result<Vec<_>>>()?
+        } else {
+            fields
+                .iter()
+                .enumerate()
+                .map(|(unnamed_idx, field)| {
+                    let mut this = StructField::new(None, field.clone(), Some(unnamed_idx));
                     this.parse_attributes_for_field()?;
                     Ok(this)
                 })
-            })
-            .collect::<syn::Result<Vec<_>>>()?;
+                .collect::<syn::Result<Vec<_>>>()?
+        };
 
-        Ok(Self { fields: struct_fields })
+        Ok(Self { fields: struct_fields, is_named })
     }
 
     pub fn from_source_tokens(&self) -> syn::Result<TokenStream> {
-        let from_source_tokens = self
+        let tokens = self
             .fields
             .iter()
             .map(|field| field.from_source_tokens())
             .collect::<syn::Result<Vec<_>>>()?;
 
-        let gen = quote! {
-            Self {
-                #(#from_source_tokens)*
+        let gen = if self.is_named {
+            quote! {
+                Self {
+                    #(#tokens)*
+                }
+            }
+        } else {
+            let tokens_combined = quote! { #(#tokens),* };
+            quote! {
+                Self(#tokens_combined)
             }
         };
 
@@ -58,9 +79,16 @@ impl StructContainer {
             .map(|field| field.to_source_tokens())
             .collect::<syn::Result<Vec<_>>>()?;
 
-        let gen = quote! {
-            #source_type {
-                #(#tokens)*
+        let gen = if self.is_named {
+            quote! {
+                #source_type {
+                    #(#tokens)*
+                }
+            }
+        } else {
+            let tokens_combined = quote! { #(#tokens),* };
+            quote! {
+                #source_type(#tokens_combined)
             }
         };
 
@@ -68,21 +96,16 @@ impl StructContainer {
     }
 }
 
-impl From<Vec<StructField>> for StructContainer {
-    fn from(value: Vec<StructField>) -> Self {
-        Self { fields: value }
-    }
-}
-
 pub struct StructField {
-    pub ident:       Ident,
-    pub field:       Field,
-    pub field_attrs: Vec<TypeAttribute>,
+    pub ident:          Option<Ident>,
+    pub field:          Field,
+    pub field_attrs:    Vec<TypeAttribute>,
+    pub is_unnamed_idx: Option<usize>,
 }
 
 impl StructField {
-    pub fn new(ident: Ident, field: Field) -> Self {
-        Self { ident, field, field_attrs: Vec::new() }
+    pub fn new(ident: Option<Ident>, field: Field, is_unnamed_idx: Option<usize>) -> Self {
+        Self { ident, field, field_attrs: Vec::new(), is_unnamed_idx }
     }
 
     pub fn parse_attributes_for_field(&mut self) -> syn::Result<()> {
@@ -110,7 +133,12 @@ impl StructField {
             let func_name = parse_str_expr_into_lit_expr(&name_val.value)?;
             quote! { #ident: RedefinedConvert::from_source(src.#func_name()), }
         } else if fields_attrs.is_empty() {
-            quote! { #ident: RedefinedConvert::from_source(src.#ident),}
+            if let Some(idx) = self.is_unnamed_idx {
+                let index = syn::Index::from(idx);
+                quote! { RedefinedConvert::from_source(src.#index)}
+            } else {
+                quote! { #ident: RedefinedConvert::from_source(src.#ident),}
+            }
         } else {
             unreachable!("cannot reach");
         };
@@ -121,7 +149,12 @@ impl StructField {
     pub fn to_source_tokens(&self) -> syn::Result<TokenStream> {
         let matched_field = &self.ident;
 
-        let gen = quote! { #matched_field: self.#matched_field.to_source(), };
+        let gen = if let Some(idx) = self.is_unnamed_idx {
+            let index = syn::Index::from(idx);
+            quote! { self.#index.to_source() }
+        } else {
+            quote! { #matched_field: self.#matched_field.to_source(), }
+        };
 
         Ok(gen)
     }

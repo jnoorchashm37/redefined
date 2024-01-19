@@ -4,6 +4,14 @@ use redefined_outside_crate_tests::OutsideStruct;
 use super::r#struct::{ComplexStructA, ComplexStructB, InsideStruct};
 use crate::RedefinedConvert;
 
+/*
+
+
+
+
+
+Basic Enum
+*/
 #[derive(Debug, PartialEq, Clone)]
 pub enum EnumA {
     A,
@@ -17,21 +25,6 @@ pub enum EnumB {
     A,
     B,
     C(u64),
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum ComplexEnumA {
-    A(u64),
-    B(ComplexStructA),
-    C { value: Vec<OutsideStruct> },
-}
-
-#[derive(Debug, Clone, PartialEq, Redefined)]
-#[redefined(ComplexEnumA)]
-pub enum ComplexEnumB {
-    A(u64),
-    B(ComplexStructB),
-    C { value: Vec<InsideStruct> },
 }
 
 #[test]
@@ -48,6 +41,29 @@ fn test_enum() {
     let enum_b = EnumB::from_source(enum_a.clone());
     let enum_b_to_a: EnumA = enum_b.to_source();
     assert_eq!(enum_b_to_a, enum_a);
+}
+
+/*
+
+
+
+
+
+Complex Enum
+*/
+#[derive(Debug, PartialEq, Clone)]
+pub enum ComplexEnumA {
+    A(u64),
+    B(ComplexStructA),
+    C { value: Vec<OutsideStruct> },
+}
+
+#[derive(Debug, Clone, PartialEq, Redefined)]
+#[redefined(ComplexEnumA)]
+pub enum ComplexEnumB {
+    A(u64),
+    B(ComplexStructB),
+    C { value: Vec<InsideStruct> },
 }
 
 #[test]

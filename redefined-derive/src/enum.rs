@@ -87,7 +87,7 @@ impl EnumField {
                     .map(|f| f.ident.as_ref().unwrap().clone())
                     .collect();
                 let cloned_field_names = field_names.clone();
-                
+
                 if !field_names.is_empty() {
                     let field_mappings = cloned_field_names.into_iter().map(|field_name| {
                         quote! { #field_name: RedefinedConvert::from_source(#field_name) }
@@ -134,7 +134,7 @@ impl EnumField {
                     .map(|f| f.ident.as_ref().unwrap().clone())
                     .collect();
                 let cloned_field_names = field_names.clone();
-                
+
                 if !field_names.is_empty() {
                     let field_mappings = cloned_field_names.into_iter().map(|field_name| {
                         quote! { #field_name: #field_name.to_source() }
