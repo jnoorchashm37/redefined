@@ -1,4 +1,4 @@
-max_width = 100
+max_width = 150
 chain_width = 60
 error_on_line_overflow = true
 error_on_unformatted = false

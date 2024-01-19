@@ -51,7 +51,23 @@ macro_rules! self_convert {
                     self
                 }
             }
+
+            self_convert_as_generic_slice!($val);
         )*
+    };
+}
+
+macro_rules! self_convert_as_generic_slice {
+    ($val:ident) => {
+        impl<const N: usize> RedefinedConvert<[$val; N]> for [$val; N] {
+            fn from_source(item: [$val; N]) -> Self {
+                item
+            }
+
+            fn to_source(self) -> [$val; N] {
+                self
+            }
+        }
     };
 }
 

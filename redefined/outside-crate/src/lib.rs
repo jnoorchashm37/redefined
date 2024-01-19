@@ -28,3 +28,9 @@ pub struct GenericStructA<X, Y> {
     pub d:    X,
     pub vals: Vec<Y>,
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct GenericConstantStructA<const XVAL: usize> {
+    pub p: u64,
+    pub d: [i128; XVAL],
+}

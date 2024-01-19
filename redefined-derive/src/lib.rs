@@ -1,21 +1,22 @@
 #![feature(stmt_expr_attributes)]
 
 use proc_macro::TokenStream;
-use syn::parse_macro_input;
-use syn::DeriveInput;
+use syn::{parse_macro_input, DeriveInput};
 
 mod parse;
 
-#[macro_use]
 mod r#enum;
 
-#[macro_use]
+mod attributes;
+
+mod outer;
+
 mod r#struct;
 
-#[proc_macro_derive(Redefined, attributes(redefined))]
+#[proc_macro_derive(Redefined, attributes(redefined, redefined_attr))]
 pub fn derive_redefined(input: TokenStream) -> TokenStream {
-    let mut input = parse_macro_input!(input as DeriveInput);
-    parse::expand_derive_redefined(&mut input)
+    let input = parse_macro_input!(input as DeriveInput);
+    parse::expand_derive_redefined(&input)
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }
