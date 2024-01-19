@@ -49,6 +49,6 @@ pub struct GenericConstantStructB<const XVAL: usize> {
 fn test_const_generic_struct() {
     let struct_a = GenericConstantStructA { p: 100, d: [100, 231, -12356] };
     let struct_b = GenericConstantStructB::from_source(struct_a.clone());
-    let struct_b_to_a = struct_b.to_source();
+    let struct_b_to_a: GenericConstantStructA<3> = struct_b.to_source();
     assert_eq!(struct_b_to_a, struct_a);
 }

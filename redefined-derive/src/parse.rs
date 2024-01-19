@@ -79,9 +79,20 @@ impl Container {
                                 #to_source_tokens
                          }
                      }
+
+                 impl #impl_generics RedefinedConvert<Self> for  #target_type #ty_generics
+                     {
+                         fn from_source(src: Self) -> Self {
+                             src
+                         }
+
+                         fn to_source(self) -> Self {
+                            self
+                         }
+                     }
             }
         } else {
-            let (_, target_type_generics, _) = self.outer.target_generics.split_for_impl();
+            let (target_type_impl_generics, target_type_generics, _) = self.outer.target_generics.split_for_impl();
             let (generics, source_generics, where_clause) = self.build_generics_with_where_clause()?;
             let (combined_impl_generics, ..) = generics.split_for_impl();
 
@@ -97,6 +108,18 @@ impl Container {
                                 #to_source_tokens
                          }
                      }
+
+
+                impl #target_type_impl_generics RedefinedConvert<Self> for #target_type #target_type_generics
+                    {
+                        fn from_source(src: Self) -> Self {
+                            src
+                        }
+
+                        fn to_source(self) -> Self {
+                           self
+                        }
+                    }
             }
         };
 
