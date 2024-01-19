@@ -129,10 +129,33 @@ macro_rules! self_convert_sized {
     };
 }
 
+self_convert_with_fixed_size_array!(u8, u16, u32, u64, u128);
+self_convert_with_fixed_size_array!(i8, i16, i32, i64, i128);
+self_convert_with_fixed_size_array!(f32, f64);
+self_convert_with_fixed_size_array!(String, char);
+self_convert_with_fixed_size_array!(bool);
+self_convert_sized!(str);
+
+/// 2 tuple
+impl<A, B, C, D> RedefinedConvert<(A, B)> for (C, D)
+where
+    C: RedefinedConvert<A>,
+    D: RedefinedConvert<B>,
+{
+    fn from_source(item: (A, B)) -> Self {
+        (C::from_source(item.0), D::from_source(item.1))
+    }
+
+    fn to_source(self) -> (A, B) {
+        (self.0.to_source(), self.1.to_source())
+    }
+}
+
+/// all tuple stuff
 #[macro_export]
 macro_rules! self_convert_tuples {
     ($($T:ident),*) => {
-        impl<$($T),*> RedefinedConvert<($($T,)*)> for ($($T,)*) {
+        impl<$($T: RedefinedConvert<$T>),*> RedefinedConvert<($($T,)*)> for ($($T,)*) {
             fn from_source(item: ($($T,)*)) -> Self {
                 item
             }
@@ -146,19 +169,84 @@ macro_rules! self_convert_tuples {
 
 self_convert_tuples!();
 self_convert_tuples!(T1);
-self_convert_tuples!(T1, T2);
-self_convert_tuples!(T1, T2, T3);
-self_convert_tuples!(T1, T2, T3, T4);
-self_convert_tuples!(T1, T2, T3, T4, T5);
-self_convert_tuples!(T1, T2, T3, T4, T5, T6);
 self_convert_tuples!(T1, T2, T3, T4, T5, T6, T7);
 self_convert_tuples!(T1, T2, T3, T4, T5, T6, T7, T8);
 self_convert_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9);
 self_convert_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10);
 
-self_convert_with_fixed_size_array!(u8, u16, u32, u64, u128);
-self_convert_with_fixed_size_array!(i8, i16, i32, i64, i128);
-self_convert_with_fixed_size_array!(f32, f64);
-self_convert_with_fixed_size_array!(String, char);
-self_convert_with_fixed_size_array!(bool);
-self_convert_sized!(str);
+/// 3 tuple
+impl<A, B, C, D, E, F> RedefinedConvert<(A, B, C)> for (D, E, F)
+where
+    D: RedefinedConvert<A>,
+    E: RedefinedConvert<B>,
+    F: RedefinedConvert<C>,
+{
+    fn from_source(item: (A, B, C)) -> Self {
+        (D::from_source(item.0), E::from_source(item.1), F::from_source(item.2))
+    }
+
+    fn to_source(self) -> (A, B, C) {
+        (self.0.to_source(), self.1.to_source(), self.2.to_source())
+    }
+}
+
+/// 4 tuple
+impl<A, B, C, D, E, F, G, H> RedefinedConvert<(A, B, C, D)> for (E, F, G, H)
+where
+    E: RedefinedConvert<A>,
+    F: RedefinedConvert<B>,
+    G: RedefinedConvert<C>,
+    H: RedefinedConvert<D>,
+{
+    fn from_source(item: (A, B, C, D)) -> Self {
+        (E::from_source(item.0), F::from_source(item.1), G::from_source(item.2), H::from_source(item.3))
+    }
+
+    fn to_source(self) -> (A, B, C, D) {
+        (self.0.to_source(), self.1.to_source(), self.2.to_source(), self.3.to_source())
+    }
+}
+
+/// 5 tuple
+impl<A, B, C, D, E, F, G, H, I, J> RedefinedConvert<(A, B, C, D, E)> for (F, G, H, I, J)
+where
+    F: RedefinedConvert<A>,
+    G: RedefinedConvert<B>,
+    H: RedefinedConvert<C>,
+    I: RedefinedConvert<D>,
+    J: RedefinedConvert<E>,
+{
+    fn from_source(item: (A, B, C, D, E)) -> Self {
+        (F::from_source(item.0), G::from_source(item.1), H::from_source(item.2), I::from_source(item.3), J::from_source(item.4))
+    }
+
+    fn to_source(self) -> (A, B, C, D, E) {
+        (self.0.to_source(), self.1.to_source(), self.2.to_source(), self.3.to_source(), self.4.to_source())
+    }
+}
+
+/// 6 tuple
+impl<A, B, C, D, E, F, G, H, I, J, K, L> RedefinedConvert<(A, B, C, D, E, F)> for (G, H, I, J, K, L)
+where
+    G: RedefinedConvert<A>,
+    H: RedefinedConvert<B>,
+    I: RedefinedConvert<C>,
+    J: RedefinedConvert<D>,
+    K: RedefinedConvert<E>,
+    L: RedefinedConvert<F>,
+{
+    fn from_source(item: (A, B, C, D, E, F)) -> Self {
+        (
+            G::from_source(item.0),
+            H::from_source(item.1),
+            I::from_source(item.2),
+            J::from_source(item.3),
+            K::from_source(item.4),
+            L::from_source(item.5),
+        )
+    }
+
+    fn to_source(self) -> (A, B, C, D, E, F) {
+        (self.0.to_source(), self.1.to_source(), self.2.to_source(), self.3.to_source(), self.4.to_source(), self.5.to_source())
+    }
+}
