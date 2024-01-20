@@ -61,7 +61,7 @@ where
 }
 
 #[macro_export]
-macro_rules! self_convert_with_fixed_size_array {
+macro_rules! self_convert_redefined_with_fixed_size_array {
     ($($val:ident),*) => {
         $(
             impl RedefinedConvert<$val> for $val {
@@ -74,13 +74,13 @@ macro_rules! self_convert_with_fixed_size_array {
                 }
             }
 
-            self_convert_as_generic_slice!($val);
+            self_convert_redefined_as_generic_slice!($val);
         )*
     };
 }
 
 #[macro_export]
-macro_rules! self_convert {
+macro_rules! self_convert_redefined {
     ($($val:ident),*) => {
         $(
             impl RedefinedConvert<$val> for $val {
@@ -97,7 +97,7 @@ macro_rules! self_convert {
 }
 
 #[macro_export]
-macro_rules! self_convert_as_generic_slice {
+macro_rules! self_convert_redefined_as_generic_slice {
     ($val:ident) => {
         impl<const N: usize> RedefinedConvert<[$val; N]> for [$val; N] {
             fn from_source(item: [$val; N]) -> Self {
@@ -112,7 +112,7 @@ macro_rules! self_convert_as_generic_slice {
 }
 
 #[macro_export]
-macro_rules! self_convert_sized {
+macro_rules! self_convert_redefined_sized {
     ($($val:ident),*) => {
         $(
             impl RedefinedConvert<$val> for $val
@@ -129,12 +129,12 @@ macro_rules! self_convert_sized {
     };
 }
 
-self_convert_with_fixed_size_array!(u8, u16, u32, u64, u128);
-self_convert_with_fixed_size_array!(i8, i16, i32, i64, i128);
-self_convert_with_fixed_size_array!(f32, f64);
-self_convert_with_fixed_size_array!(String, char);
-self_convert_with_fixed_size_array!(bool);
-self_convert_sized!(str);
+self_convert_redefined_with_fixed_size_array!(u8, u16, u32, u64, u128);
+self_convert_redefined_with_fixed_size_array!(i8, i16, i32, i64, i128);
+self_convert_redefined_with_fixed_size_array!(f32, f64);
+self_convert_redefined_with_fixed_size_array!(String, char);
+self_convert_redefined_with_fixed_size_array!(bool);
+self_convert_redefined_sized!(str);
 
 /// 2 tuple
 impl<A, B, C, D> RedefinedConvert<(A, B)> for (C, D)
@@ -153,7 +153,7 @@ where
 
 /// all tuple stuff
 #[macro_export]
-macro_rules! self_convert_tuples {
+macro_rules! self_convert_redefined_tuples {
     ($($T:ident),*) => {
         impl<$($T: RedefinedConvert<$T>),*> RedefinedConvert<($($T,)*)> for ($($T,)*) {
             fn from_source(item: ($($T,)*)) -> Self {
@@ -167,12 +167,12 @@ macro_rules! self_convert_tuples {
     };
 }
 
-self_convert_tuples!();
-self_convert_tuples!(T1);
-self_convert_tuples!(T1, T2, T3, T4, T5, T6, T7);
-self_convert_tuples!(T1, T2, T3, T4, T5, T6, T7, T8);
-self_convert_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9);
-self_convert_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10);
+self_convert_redefined_tuples!();
+self_convert_redefined_tuples!(T1);
+self_convert_redefined_tuples!(T1, T2, T3, T4, T5, T6, T7);
+self_convert_redefined_tuples!(T1, T2, T3, T4, T5, T6, T7, T8);
+self_convert_redefined_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9);
+self_convert_redefined_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10);
 
 /// 3 tuple
 impl<A, B, C, D, E, F> RedefinedConvert<(A, B, C)> for (D, E, F)
