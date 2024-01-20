@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::{self, punctuated::Punctuated, AngleBracketedGenericArguments, Ident, Meta, PathArguments, Token};
 
-use super::symbol::{Symbol, FIELD_FN, FROM_SOURCE_FN, SOURCE_GENERICS, TO_SOURCE_FN};
+use super::symbol::*;
 
 #[derive(Clone)]
 pub struct TypeAttribute {
@@ -88,8 +88,13 @@ pub fn parse_attr_meta_into_container(inner_meta: &Punctuated<Meta, Token![,]>) 
         if meta.path() == TO_SOURCE_FN {
             attributes.push(TypeAttribute::new(TO_SOURCE_FN, meta.clone()))
         }
+
         if meta.path() == SOURCE_GENERICS {
             attributes.push(TypeAttribute::new(SOURCE_GENERICS, meta.clone()))
+        }
+
+        if meta.path() == TRANSMUTE {
+            attributes.push(TypeAttribute::new(TO_SOURCE_FN, meta.clone()))
         }
     }
 

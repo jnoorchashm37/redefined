@@ -3,7 +3,7 @@ use quote::{quote, ToTokens};
 use syn::{self, parse_quote, Data, DataEnum, DataStruct, DeriveInput, Expr, GenericParam, Generics, Ident, LitStr, TypeParam};
 
 use crate::{
-    attributes::symbol::{FROM_SOURCE_FN, TO_SOURCE_FN},
+    attributes::symbol::{FROM_SOURCE_FN, TO_SOURCE_FN, TRANSMUTE},
     outer::OuterContainer,
     r#enum::EnumContainer,
     r#struct::StructContainer,
@@ -39,7 +39,13 @@ impl Container {
         let source_type = &self.outer.source_type;
         let target_type = &self.outer.target_type;
 
-        let from_source_tokens = if let Some(func) = self
+        let is_transmute = self
+            .outer
+            .container_attrs
+            .iter()
+            .any(|attr| attr.symbol == TRANSMUTE);
+
+        let mut from_source_tokens = if let Some(func) = self
             .outer
             .container_attrs
             .iter()
@@ -52,7 +58,7 @@ impl Container {
             quote! { #inner_from_source_tokens }
         };
 
-        let to_source_tokens = if let Some(func) = self
+        let mut to_source_tokens = if let Some(func) = self
             .outer
             .container_attrs
             .iter()
@@ -67,6 +73,11 @@ impl Container {
 
         let (impl_generics, ty_generics, _) = self.outer.target_generics.split_for_impl();
 
+        if is_transmute {
+            from_source_tokens = quote! { unsafe { std::mem::transmute::<#source_type #ty_generics, Self>()} };
+            to_source_tokens = quote! { unsafe { std::mem::transmute::<Self, #source_type #ty_generics>()} };
+        }
+
         let gen = if self.outer.source_generics.is_empty() {
             quote! {
                  impl #impl_generics RedefinedConvert<#source_type #ty_generics> for #target_type #ty_generics
@@ -80,11 +91,17 @@ impl Container {
                          }
                      }
 
+
             }
         } else {
             let (_, target_type_generics, _) = self.outer.target_generics.split_for_impl();
             let (generics, source_generics, where_clause) = self.build_generics_with_where_clause()?;
             let (combined_impl_generics, ..) = generics.split_for_impl();
+
+            if is_transmute {
+                from_source_tokens = quote! { unsafe { std::mem::transmute::<#source_type <#(#source_generics,)*>, Self>()} };
+                to_source_tokens = quote! { unsafe { std::mem::transmute::<Self, #source_type <#(#source_generics,)*>>()} };
+            }
 
             quote! {
                  impl #combined_impl_generics RedefinedConvert<#source_type <#(#source_generics,)*>> for #target_type #target_type_generics

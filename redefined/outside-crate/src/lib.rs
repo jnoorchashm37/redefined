@@ -34,3 +34,15 @@ pub struct GenericConstantStructA<const XVAL: usize> {
     pub p: u64,
     pub d: [i128; XVAL],
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct TransmuteStructA<X, Y> {
+    p: ComplexOutsideEnumA,
+    d: GenericStructA<X, Y>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum ComplexOutsideEnumA {
+    A(u64),
+    C { value: Vec<OutsideStruct> },
+}

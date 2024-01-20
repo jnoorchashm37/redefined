@@ -1,6 +1,10 @@
 use redefined_derive::Redefined;
-use redefined_outside_crate_tests::NonPubFieldStructA;
+use redefined_outside_crate_tests::{GenericConstantStructA, NonPubFieldStructA, TransmuteStructA};
 
+use super::{
+    generics::{GenericConstantStructB, GenericStructB},
+    r#enum::{ComplexEnumB, ComplexOutsideEnumB},
+};
 use crate::RedefinedConvert;
 
 /*
@@ -21,6 +25,14 @@ pub struct NonPubFieldStructB {
     pub p:    u64,
     pub d:    u64,
     pub vals: Vec<String>,
+}
+
+#[test]
+fn test_struct_non_pub_and_new_source_fn_field() {
+    let struct_a = NonPubFieldStructA::default();
+    let struct_b = NonPubFieldStructB::from_source(struct_a.clone());
+    let struct_b_to_a: NonPubFieldStructA = struct_b.to_source();
+    assert_eq!(struct_b_to_a, struct_a);
 }
 
 /*
@@ -50,17 +62,36 @@ impl ToFromSourceFieldStructB {
 }
 
 #[test]
-fn test_struct_non_pub_and_new_source_fn_field() {
-    let struct_a = NonPubFieldStructA::default();
-    let struct_b = NonPubFieldStructB::from_source(struct_a.clone());
-    let struct_b_to_a: NonPubFieldStructA = struct_b.to_source();
-    assert_eq!(struct_b_to_a, struct_a);
-}
-
-#[test]
 fn test_struct_new_self_and_new_source_fn_field() {
     let struct_a = NonPubFieldStructA::default();
     let struct_b = ToFromSourceFieldStructB::from_source(struct_a.clone());
     let struct_b_to_a: NonPubFieldStructA = struct_b.to_source();
     assert_eq!(struct_b_to_a, struct_a);
 }
+/*
+
+
+
+
+
+/*
+Transmute between the types
+- Uses 'to_source' attribute to create the source struct
+- Uses 'from_source' attribute to create the self
+*/
+#[derive(Debug, Clone, PartialEq, Redefined)]
+#[redefined(TransmuteStructA)]
+#[redefined_attr(transmute, source_generics(A, B))]
+pub struct TransmuteStructB<X, Y> {
+    p: ComplexOutsideEnumB,
+    d: GenericStructB<X, Y>,
+}
+
+#[test]
+fn test_transmute_struct() {
+    let struct_a = NonPubFieldStructA::default();
+    let struct_b = ToFromSourceFieldStructB::from_source(struct_a.clone());
+    let struct_b_to_a: NonPubFieldStructA = struct_b.to_source();
+    assert_eq!(struct_b_to_a, struct_a);
+}
+*/
