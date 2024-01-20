@@ -30,8 +30,8 @@ pub struct NonPubFieldStructB {
 #[test]
 fn test_struct_non_pub_and_new_source_fn_field() {
     let struct_a = NonPubFieldStructA::default();
-    let struct_b = NonPubFieldStructB::from_source(struct_a.clone());
-    let struct_b_to_a: NonPubFieldStructA = struct_b.to_source();
+    let struct_b: NonPubFieldStructB = struct_a.clone().into();
+    let struct_b_to_a: NonPubFieldStructA = struct_b.into();
     assert_eq!(struct_b_to_a, struct_a);
 }
 
@@ -64,8 +64,8 @@ impl ToFromSourceFieldStructB {
 #[test]
 fn test_struct_new_self_and_new_source_fn_field() {
     let struct_a = NonPubFieldStructA::default();
-    let struct_b = ToFromSourceFieldStructB::from_source(struct_a.clone());
-    let struct_b_to_a: NonPubFieldStructA = struct_b.to_source();
+    let struct_b: NonPubFieldStructB = struct_a.clone().into();
+    let struct_b_to_a: NonPubFieldStructA = struct_b.into();
     assert_eq!(struct_b_to_a, struct_a);
 }
 /*

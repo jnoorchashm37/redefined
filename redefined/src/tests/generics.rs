@@ -24,8 +24,8 @@ pub struct GenericStructB<X, Y> {
 #[test]
 fn test_type_generic_struct() {
     let struct_a: GenericStructA<i32, String> = GenericStructA { p: 10, d: 100, vals: vec![String::new()] };
-    let struct_b: GenericStructB<i32, String> = GenericStructB::from_source(struct_a.clone());
-    let struct_b_to_a: GenericStructA<i32, String> = struct_b.to_source();
+    let struct_b: GenericStructB<i32, String> = struct_a.clone().into();
+    let struct_b_to_a: GenericStructA<i32, String> = struct_b.into();
     assert_eq!(struct_b_to_a, struct_a);
 }
 
@@ -48,7 +48,7 @@ pub struct GenericConstantStructB<const XVAL: usize> {
 #[test]
 fn test_const_generic_struct() {
     let struct_a = GenericConstantStructA { p: 100, d: [100, 231, -12356] };
-    let struct_b = GenericConstantStructB::from_source(struct_a.clone());
-    let struct_b_to_a: GenericConstantStructA<3> = struct_b.to_source();
+    let struct_b: GenericConstantStructB<3> = struct_a.clone().into();
+    let struct_b_to_a: GenericConstantStructA<3> = struct_b.into();
     assert_eq!(struct_b_to_a, struct_a);
 }

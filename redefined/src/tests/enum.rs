@@ -70,21 +70,21 @@ pub enum ComplexEnumB {
 fn test_complex_enum() {
     // case 1
     let enum_a = ComplexEnumA::A(100);
-    let enum_b = ComplexEnumB::from_source(enum_a.clone());
+    let enum_b: ComplexEnumB = enum_a.clone().into();
     assert_eq!(ComplexEnumB::A(100), enum_b);
-    let enum_b_to_a: ComplexEnumA = enum_b.to_source();
+    let enum_b_to_a: ComplexEnumA = enum_b.into();
     assert_eq!(enum_b_to_a, enum_a);
 
     // case 2
     let enum_a = ComplexEnumA::B(ComplexStructA::default());
-    let enum_b = ComplexEnumB::from_source(enum_a.clone());
-    let enum_b_to_a: ComplexEnumA = enum_b.to_source();
+    let enum_b: ComplexEnumB = enum_a.clone().into();
+    let enum_b_to_a: ComplexEnumA = enum_b.into();
     assert_eq!(enum_b_to_a, enum_a);
 
     // case 3
     let enum_a = ComplexEnumA::C { value: vec![OutsideStruct::default()] };
-    let enum_b = ComplexEnumB::from_source(enum_a.clone());
-    let enum_b_to_a: ComplexEnumA = enum_b.to_source();
+    let enum_b: ComplexEnumB = enum_a.clone().into();
+    let enum_b_to_a: ComplexEnumA = enum_b.into();
     assert_eq!(enum_b_to_a, enum_a);
 }
 /*
@@ -106,14 +106,14 @@ pub enum ComplexOutsideEnumB {
 fn test_complex_outside_enum() {
     // case 1
     let enum_a = ComplexOutsideEnumA::A(100);
-    let enum_b = ComplexOutsideEnumB::from_source(enum_a.clone());
+    let enum_b: ComplexOutsideEnumB = enum_a.clone().into();
     assert_eq!(ComplexOutsideEnumB::A(100), enum_b);
-    let enum_b_to_a: ComplexOutsideEnumA = enum_b.to_source();
+    let enum_b_to_a: ComplexOutsideEnumA = enum_b.into();
     assert_eq!(enum_b_to_a, enum_a);
 
     // case 2
     let enum_a = ComplexOutsideEnumA::C { value: vec![OutsideStruct::default()] };
-    let enum_b = ComplexOutsideEnumB::from_source(enum_a.clone());
-    let enum_b_to_a: ComplexOutsideEnumA = enum_b.to_source();
+    let enum_b: ComplexOutsideEnumB = enum_a.clone().into();
+    let enum_b_to_a: ComplexOutsideEnumA = enum_b.into();
     assert_eq!(enum_b_to_a, enum_a);
 }

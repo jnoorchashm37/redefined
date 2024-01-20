@@ -83,14 +83,27 @@ impl Container {
                  impl #impl_generics RedefinedConvert<#source_type #ty_generics> for #target_type #ty_generics
                      {
                          fn from_source(src: #source_type #ty_generics) -> Self {
-                                #from_source_tokens
+                                src.into()
                          }
 
                          fn to_source(self) -> #source_type #ty_generics {
-                                #to_source_tokens
+                                self.into()
                          }
                      }
 
+                impl #impl_generics From<#source_type #ty_generics> for #target_type #ty_generics
+                    {
+                        fn from(src: #source_type #ty_generics) -> Self {
+                            #from_source_tokens
+                        }
+                    }
+
+                impl #impl_generics Into<#source_type #ty_generics> for #target_type #ty_generics
+                    {
+                        fn into(self) -> #source_type #ty_generics {
+                            #to_source_tokens
+                        }
+                    }
 
             }
         } else {
@@ -108,13 +121,29 @@ impl Container {
                  #where_clause
                      {
                          fn from_source(src: #source_type <#(#source_generics,)*>) -> Self {
-                                #from_source_tokens
+                                src.into()
                          }
 
                          fn to_source(self) -> #source_type <#(#source_generics,)*> {
-                                #to_source_tokens
+                                self.into()
                          }
                      }
+
+                    impl #combined_impl_generics From<#source_type <#(#source_generics,)*>> for #target_type #target_type_generics
+                    #where_clause
+                        {
+                            fn from(src: #source_type <#(#source_generics,)*>) -> Self {
+                                #from_source_tokens
+                            }
+                        }
+
+                    impl #combined_impl_generics Into<#source_type <#(#source_generics,)*>> for #target_type #target_type_generics
+                    #where_clause
+                        {
+                            fn into(self) -> #source_type <#(#source_generics,)*> {
+                                #to_source_tokens
+                            }
+                        }
             }
         };
 
@@ -138,13 +167,14 @@ impl Container {
             })
             .collect::<Vec<_>>();
 
+        // + From<#s> + Into<#s>,
         let zip_generics = ext_source_generic_params
             .clone()
             .into_iter()
             .zip(self.outer.target_generics.params.clone())
             .map(|(source, target)| {
                 let (s, t) = (source.to_token_stream(), target.to_token_stream());
-                quote! { #t: RedefinedConvert<#s>, }
+                quote! { #t: RedefinedConvert<#s>,  }
             })
             .collect::<Vec<_>>();
 

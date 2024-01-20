@@ -30,8 +30,8 @@ pub struct StructB {
 #[test]
 fn test_struct() {
     let struct_a = StructA::default();
-    let struct_b = StructB::from_source(struct_a.clone());
-    let struct_b_to_a: StructA = struct_b.to_source();
+    let struct_b: StructB = struct_a.clone().into();
+    let struct_b_to_a: StructA = struct_b.into();
     assert_eq!(struct_b_to_a, struct_a);
 }
 
@@ -54,8 +54,8 @@ pub struct UnnamedStructB(u64, String);
 #[test]
 fn test_unnamed_struct() {
     let struct_a = UnnamedStructA::default();
-    let struct_b = UnnamedStructB::from_source(struct_a.clone());
-    let struct_b_to_a: UnnamedStructA = struct_b.to_source();
+    let struct_b: UnnamedStructB = struct_a.clone().into();
+    let struct_b_to_a: UnnamedStructA = struct_b.into();
     assert_eq!(struct_b_to_a, struct_a);
 }
 
@@ -79,8 +79,8 @@ pub struct InsideStruct {
 #[test]
 fn test_outside_crate_struct() {
     let struct_a = OutsideStruct::default();
-    let struct_b = InsideStruct::from_source(struct_a.clone());
-    let struct_b_to_a: OutsideStruct = struct_b.to_source();
+    let struct_b: InsideStruct = struct_a.clone().into();
+    let struct_b_to_a: OutsideStruct = struct_b.into();
     assert_eq!(struct_b_to_a, struct_a);
 }
 
@@ -111,7 +111,7 @@ pub struct ComplexStructB {
 #[test]
 fn test_complex_struct() {
     let struct_a = ComplexStructA::default();
-    let struct_b = ComplexStructB::from_source(struct_a.clone());
-    let struct_b_to_a: ComplexStructA = struct_b.to_source();
+    let struct_b: ComplexStructB = struct_a.clone().into();
+    let struct_b_to_a: ComplexStructA = struct_b.into();
     assert_eq!(struct_b_to_a, struct_a);
 }
