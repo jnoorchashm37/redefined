@@ -129,7 +129,7 @@ macro_rules! self_convert_redefined_sized {
     };
 }
 
-self_convert_redefined_with_fixed_size_array!(u8, u16, u32, u64, u128);
+self_convert_redefined_with_fixed_size_array!(usize, u8, u16, u32, u64, u128);
 self_convert_redefined_with_fixed_size_array!(i8, i16, i32, i64, i128);
 self_convert_redefined_with_fixed_size_array!(f32, f64);
 self_convert_redefined_with_fixed_size_array!(String, char);
