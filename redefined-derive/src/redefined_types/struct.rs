@@ -1,14 +1,8 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{self, punctuated::Punctuated, DataStruct, Field, Fields, Ident, Meta, Token};
+use syn::{self, parse::Parse, DataStruct, Field, Fields, Ident};
 
-use crate::{
-    attributes::{
-        symbol::FIELD_FN,
-        type_attr::{parse_attr_meta_into_fields, TypeAttribute},
-    },
-    parse::parse_str_expr_into_lit_expr,
-};
+use crate::attributes::{symbol::FIELD_FN, type_attr::TypeAttribute, ContainerAttributes};
 
 pub struct StructContainer {
     pub fields:   Vec<StructField>,
@@ -110,9 +104,8 @@ impl StructField {
 
     pub fn parse_attributes_for_field(&mut self) -> syn::Result<()> {
         if let Some(attr) = self.field.attrs.first() {
-            if attr.path().is_ident("redefined_attr") {
-                let nested = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)?;
-                self.field_attrs = parse_attr_meta_into_fields(&nested)?;
+            if attr.path().is_ident("redefined") {
+                self.field_attrs = attr.parse_args_with(ContainerAttributes::parse)?.0;
             }
         }
         Ok(())
@@ -127,11 +120,7 @@ impl StructField {
                 .find_type_attr(fields_attrs)
                 .ok_or(syn::Error::new_spanned(&self.ident, "FIELD FN ERROR"))?;
 
-            let name_val = attr
-                .meta
-                .require_name_value()
-                .map_err(|_| syn::Error::new_spanned(&attr.meta, "#[redefined_attr(func = \"..\")] must be a Meta::NameValue"))?;
-            let func_name = parse_str_expr_into_lit_expr(&name_val.value)?;
+            let func_name = attr.nv_tokens.unwrap();
 
             quote! { #ident: RedefinedConvert::from_source(#func_name), }
         } else if fields_attrs.is_empty() {
@@ -142,7 +131,7 @@ impl StructField {
                 quote! { #ident: RedefinedConvert::from_source(src.#ident),}
             }
         } else {
-            unreachable!("cannot reach");
+            unreachable!("cannot reach - should be no more field attrs: {:?}", fields_attrs);
         };
 
         Ok(gen)

@@ -10,3 +10,8 @@ name = "redefined"
 # derive
 redefined-derive = { path = "../redefined-derive" }
 redefined-outside-crate-tests = { path = "./outside-crate" }
+
+
+[features]
+default = ["unsafe"]
+unsafe = ["redefined-derive/unsafe"]

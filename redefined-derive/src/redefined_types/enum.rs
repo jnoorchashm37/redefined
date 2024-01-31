@@ -1,8 +1,8 @@
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
-use syn::{self, punctuated::Punctuated, DataEnum, Fields, FieldsNamed, FieldsUnnamed, Ident, Meta, Token, Variant};
+use syn::{self, parse::Parse, DataEnum, Fields, FieldsNamed, FieldsUnnamed, Ident, Variant};
 
-use crate::attributes::type_attr::{parse_attr_meta_into_container, TypeAttribute};
+use crate::attributes::{type_attr::TypeAttribute, ContainerAttributes};
 
 pub struct EnumContainer {
     pub fields: Vec<EnumField>,
@@ -67,9 +67,8 @@ impl EnumField {
 
     pub fn parse_attributes_for_field(&mut self) -> syn::Result<()> {
         if let Some(attr) = self.variant.attrs.first() {
-            if attr.path().is_ident("redefined_attr") {
-                let nested = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)?;
-                self.field_attrs = parse_attr_meta_into_container(&nested)?;
+            if attr.path().is_ident("redefined") {
+                self.field_attrs = attr.parse_args_with(ContainerAttributes::parse)?.0;
             }
         }
         Ok(())

@@ -14,7 +14,6 @@ Struct with type generics
 
 #[derive(Debug, Clone, PartialEq, Default, Redefined)]
 #[redefined(GenericStructA)]
-#[redefined_attr(source_generics(A, B))]
 pub struct GenericStructB<X, Y> {
     pub p:    u64,
     pub d:    X,

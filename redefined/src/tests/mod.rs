@@ -1,5 +1,4 @@
-mod attr;
+mod attributes;
 mod r#enum;
-mod r#struct;
-
 mod generics;
+mod r#struct;

@@ -1,51 +1,67 @@
-use syn::{self, punctuated::Punctuated, Attribute, Generics, Ident, Meta, Token};
+use syn::{self, parse::Parse, Attribute, Ident};
 
+#[cfg(feature = "unsafe")]
+use crate::attributes::symbol::TRANSMUTE;
 use crate::attributes::{
-    symbol::SOURCE_GENERICS,
-    type_attr::{parse_attr_meta_into_container, TypeAttribute},
+    symbol::{Symbol, FROM_SOURCE_FN, TO_SOURCE_FN},
+    type_attr::TypeAttribute,
+    ContainerAttributes,
 };
 
 pub struct OuterContainer {
     pub target_type:     Ident,
-    pub target_generics: Generics,
-    pub source_type:     Ident,
-    pub source_generics: Vec<Ident>,
+    pub source_type:     Option<Ident>,
     pub container_attrs: Vec<TypeAttribute>,
 }
 
 impl OuterContainer {
-    pub fn parse(target_type: Ident, target_generics: Generics, attrs: &[Attribute]) -> syn::Result<Self> {
-        let mut container_attrs = vec![];
-
+    pub fn parse(target_type: Ident, attrs: &[Attribute]) -> syn::Result<Self> {
+        let mut container_attrs = Vec::new();
         let mut source_type = None;
 
         for attr in attrs.iter() {
             if attr.path().is_ident("redefined_attr") {
-                let nested = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)?;
-                container_attrs = parse_attr_meta_into_container(&nested)?;
+                container_attrs = attr.parse_args_with(ContainerAttributes::parse)?.0;
             }
 
             if attr.path().is_ident("redefined") {
-                attr.parse_nested_meta(|meta| {
-                    source_type = Some(
-                        meta.path
-                            .get_ident()
-                            .ok_or(syn::Error::new_spanned(&meta.path, "Source type should be an ident"))?
-                            .clone(),
-                    );
-
-                    Ok(())
-                })?;
+                source_type = attr.parse_args_with(SourceType::parse)?.0;
             }
         }
 
-        let source_generics = container_attrs
-            .iter()
-            .find(|attr| attr.symbol == SOURCE_GENERICS)
-            .map(|attr| attr.parse_source_generics_attr())
-            .transpose()?
-            .unwrap_or_default();
+        Symbol::illegal_pairings(&container_attrs.iter().map(|c| c.symbol).collect::<Vec<_>>(), source_type.is_some());
 
-        Ok(Self { target_type, target_generics, source_type: source_type.unwrap(), source_generics, container_attrs })
+        Ok(Self { target_type, source_type, container_attrs })
+    }
+
+    pub fn should_parse_fields(&self) -> bool {
+        let symbols = self
+            .container_attrs
+            .iter()
+            .map(|s| s.symbol)
+            .collect::<Vec<_>>();
+
+        #[cfg(feature = "unsafe")]
+        return !(symbols.contains(&TO_SOURCE_FN) && symbols.contains(&FROM_SOURCE_FN)) || symbols.contains(&TRANSMUTE);
+
+        #[cfg(not(feature = "unsafe"))]
+        return !(symbols.contains(&TO_SOURCE_FN) && symbols.contains(&FROM_SOURCE_FN));
+    }
+
+    pub fn get_symbol(&self, symbol: Symbol) -> Option<TypeAttribute> {
+        self.container_attrs
+            .iter()
+            .find(|s| s.symbol == symbol)
+            .cloned()
+    }
+}
+
+struct SourceType(Option<Ident>);
+
+impl Parse for SourceType {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let source_type = if input.peek(Ident) { Some(input.parse()?) } else { None };
+
+        Ok(Self(source_type))
     }
 }

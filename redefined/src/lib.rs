@@ -14,6 +14,8 @@ pub trait RedefinedConvert<O> {
     fn to_source(self) -> O;
 }
 
+//let this = &self;
+//unsafe { std::mem::transmute::<&Self, &O>(&self) }
 impl<T, F> RedefinedConvert<Option<T>> for Option<F>
 where
     F: RedefinedConvert<T>,

@@ -1,5 +1,5 @@
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct OutsideStruct {
+pub struct OutsideStructA {
     pub val1: u64,
     pub val2: f64,
     pub val3: String,
@@ -44,5 +44,5 @@ pub struct TransmuteStructA<X, Y> {
 #[derive(Debug, PartialEq, Clone)]
 pub enum ComplexOutsideEnumA {
     A(u64),
-    C { value: Vec<OutsideStruct> },
+    C { value: Vec<OutsideStructA> },
 }

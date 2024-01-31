@@ -1,114 +1,60 @@
-use proc_macro2::TokenStream;
+use std::fmt::Debug;
+
 use quote::ToTokens;
-use syn::{self, punctuated::Punctuated, AngleBracketedGenericArguments, Ident, Meta, PathArguments, Token};
+use syn::{self, parenthesized, parse::Parse, parse_quote, Expr, Ident, LitStr, Token};
 
 use super::symbol::*;
 
 #[derive(Clone)]
 pub struct TypeAttribute {
-    pub symbol: Symbol,
-    pub meta:   Meta,
+    pub symbol:      Symbol,
+    pub nv_tokens:   Option<Expr>,
+    pub list_idents: Option<Vec<Ident>>,
 }
 
-impl TypeAttribute {
-    pub fn new(symbol: Symbol, meta: Meta) -> Self {
-        Self { symbol, meta }
+impl Debug for TypeAttribute {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TypeAttribute")
+            .field("symbol", &self.symbol)
+            .field(
+                "nv_tokens",
+                &self
+                    .nv_tokens
+                    .clone()
+                    .map(|e| e.into_token_stream().to_string()),
+            )
+            .field("list_idents", &self.list_idents)
+            .finish()
     }
+}
 
-    pub fn parse_source_type(&self) -> syn::Result<(Ident, Option<AngleBracketedGenericArguments>)> {
-        let (source_type, source_generics) = match &self.meta {
-            Meta::Path(path) => {
-                if path.segments.len() == 1 && path.segments.first().unwrap().arguments.is_none() {
-                    let ident = path
-                        .get_ident()
-                        .ok_or(syn::Error::new_spanned(&self.meta, "Source type should be an ident"))?;
-                    (ident.clone(), None)
-                } else {
-                    let mut inner_ident = None;
-                    let mut generics = None;
-                    for p in &path.segments {
-                        inner_ident = Some(p.ident.clone());
-                        match &p.arguments {
-                            PathArguments::AngleBracketed(angled) => {
-                                generics = Some(angled.clone());
-                                break
-                            }
-                            _ => (),
-                        }
-                    }
-                    (inner_ident.unwrap(), generics)
-                }
+impl Parse for TypeAttribute {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let symbol: Symbol = input.parse()?;
+
+        let this = match symbol.meta {
+            SymbolMeta::Path => Self { symbol, nv_tokens: None, list_idents: None },
+            SymbolMeta::List => {
+                //let t = input.parse::<Ident>()?;
+                // panic!("NONONO, {}", t);
+                let content;
+                parenthesized!(content in input);
+
+                let idents = content
+                    .parse_terminated(Ident::parse, Token![,])?
+                    .into_iter()
+                    .collect();
+
+                Self { symbol, nv_tokens: None, list_idents: Some(idents) }
             }
-            _ => unreachable!("The source type should be a Meta::Path(_)"),
+            SymbolMeta::NameValue => {
+                input.parse::<Token![=]>()?;
+                let nv = input.parse::<Expr>()?;
+                let lit_nv: LitStr = parse_quote!(#nv);
+                Self { symbol, nv_tokens: Some(lit_nv.parse()?), list_idents: None }
+            }
         };
 
-        Ok((source_type.clone(), source_generics))
+        Ok(this)
     }
-
-    pub fn try_into_new_source_fn(&self) -> syn::Result<Option<TokenStream>> {
-        if self.symbol == TO_SOURCE_FN {
-            Ok(Some(self.meta.require_name_value()?.path.to_token_stream()))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub fn try_from_new_source_fn(&self) -> syn::Result<Option<TokenStream>> {
-        if self.symbol == FROM_SOURCE_FN {
-            Ok(Some(self.meta.require_name_value()?.path.to_token_stream()))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub fn parse_source_generics_attr(&self) -> syn::Result<Vec<Ident>> {
-        if self.symbol != SOURCE_GENERICS {
-            unreachable!("Called parse_source_generics_attr() when SELF is not SOURCE_GENERICS");
-        }
-
-        match &self.meta {
-            Meta::List(list) => {
-                let nested = list.parse_args_with(Punctuated::<Ident, Token![,]>::parse_terminated)?;
-                Ok(nested.into_iter().collect::<Vec<_>>())
-            }
-            _ => unreachable!("SOURCE_GENERICS must be a list"),
-        }
-
-        // Ok(vec![])
-    }
-}
-
-pub fn parse_attr_meta_into_container(inner_meta: &Punctuated<Meta, Token![,]>) -> syn::Result<Vec<TypeAttribute>> {
-    let mut attributes = vec![];
-
-    for meta in inner_meta.into_iter() {
-        if meta.path() == FROM_SOURCE_FN {
-            attributes.push(TypeAttribute::new(FROM_SOURCE_FN, meta.clone()))
-        }
-        if meta.path() == TO_SOURCE_FN {
-            attributes.push(TypeAttribute::new(TO_SOURCE_FN, meta.clone()))
-        }
-
-        if meta.path() == SOURCE_GENERICS {
-            attributes.push(TypeAttribute::new(SOURCE_GENERICS, meta.clone()))
-        }
-
-        if meta.path() == TRANSMUTE {
-            attributes.push(TypeAttribute::new(TO_SOURCE_FN, meta.clone()))
-        }
-    }
-
-    Ok(attributes)
-}
-
-pub fn parse_attr_meta_into_fields(inner_meta: &Punctuated<Meta, Token![,]>) -> syn::Result<Vec<TypeAttribute>> {
-    let mut attributes = vec![];
-
-    for meta in inner_meta.into_iter() {
-        if meta.path() == FIELD_FN {
-            attributes.push(TypeAttribute::new(FIELD_FN, meta.clone()))
-        }
-    }
-
-    Ok(attributes)
 }

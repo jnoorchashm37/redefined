@@ -1,5 +1,5 @@
 use redefined_derive::Redefined;
-use redefined_outside_crate_tests::OutsideStruct;
+use redefined_outside_crate_tests::OutsideStructA;
 
 use crate::RedefinedConvert;
 
@@ -69,8 +69,8 @@ Struct with source in another crate (redefined/outside-crate)
 */
 
 #[derive(Debug, Clone, PartialEq, Default, Redefined)]
-#[redefined(OutsideStruct)]
-pub struct InsideStruct {
+#[redefined(OutsideStructA)]
+pub struct OutsideStructB {
     pub val1: u64,
     pub val2: f64,
     pub val3: String,
@@ -78,9 +78,9 @@ pub struct InsideStruct {
 
 #[test]
 fn test_outside_crate_struct() {
-    let struct_a = OutsideStruct::default();
-    let struct_b: InsideStruct = struct_a.clone().into();
-    let struct_b_to_a: OutsideStruct = struct_b.into();
+    let struct_a = OutsideStructA::default();
+    let struct_b: OutsideStructB = struct_a.clone().into();
+    let struct_b_to_a: OutsideStructA = struct_b.into();
     assert_eq!(struct_b_to_a, struct_a);
 }
 
@@ -97,7 +97,7 @@ Complex struct
 pub struct ComplexStructA {
     pub n:       i128,
     pub inner_a: StructA,
-    pub inner_b: Vec<OutsideStruct>,
+    pub inner_b: Vec<OutsideStructA>,
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Redefined)]
@@ -105,7 +105,7 @@ pub struct ComplexStructA {
 pub struct ComplexStructB {
     pub n:       i128,
     pub inner_a: StructB,
-    pub inner_b: Vec<InsideStruct>,
+    pub inner_b: Vec<OutsideStructB>,
 }
 
 #[test]
