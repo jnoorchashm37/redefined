@@ -42,9 +42,9 @@ mod derive_source {
     /// complex struct 1
     #[derive(Debug, Clone, PartialEq, Redefined)]
     #[redefined(ComplexStructA)]
-    pub struct ComplexStructAA<'a, 'b> {
+    pub struct ComplexStructAA<'a> {
         pub n:       i128,
-        pub inner_a: GenericLifetimeStructA<'a, 'b>,
+        pub inner_a: GenericLifetimeStructA<'a, 'a>,
         pub inner_b: Vec<BasicStructA>,
     }
 

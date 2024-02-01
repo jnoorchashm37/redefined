@@ -77,9 +77,9 @@ pub struct TransmuteStructA<X, Y> {
 
 /// complex struct 1
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct ComplexStructA<'a, 'b> {
+pub struct ComplexStructA<'a> {
     pub n:       i128,
-    pub inner_a: GenericLifetimeStruct<'a, 'b>,
+    pub inner_a: GenericLifetimeStruct<'a, 'a>,
     pub inner_b: Vec<BasicStruct>,
 }
 
