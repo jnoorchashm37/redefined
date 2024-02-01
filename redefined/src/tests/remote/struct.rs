@@ -15,9 +15,9 @@ redefined_remote!(FixedString : "clickhouse");
 fn test_basic_named_github_remote_type() {
     let fixed_string = FixedString { string: "HI".to_string() };
     let redefined_fixed_string: FixedStringRedefined = fixed_string.clone().into();
-    let fixed_string_to_redefined_fixed_string: FixedString = redefined_fixed_string.into();
+    let redefined_fixed_string_to_fixed_string: FixedString = redefined_fixed_string.into();
 
-    assert_eq!(fixed_string_to_redefined_fixed_string, fixed_string);
+    assert_eq!(redefined_fixed_string_to_fixed_string, fixed_string);
 }
 
 // pub struct Identifier<'a>(pub &'a str);
@@ -29,8 +29,8 @@ fn test_basic_unnamed_github_remote_type() {
     let initial = identifier.0;
 
     let redefined_identifier: IdentifierRedefined = identifier.into();
-    let identifier_to_redefined_identifier: Identifier = redefined_identifier.into();
-    let converted = identifier_to_redefined_identifier.0;
+    let redefined_identifier_to_identifier: Identifier = redefined_identifier.into();
+    let converted = redefined_identifier_to_identifier.0;
 
     assert_eq!(initial, converted);
 }
@@ -43,13 +43,9 @@ pub struct Uint<const BITS: usize, const LIMBS: usize> {
 redefined_remote!(Uint : "ruint");
 
 #[test]
-fn test_basic_usnnamed_github_remote_type() {
-    let identifier = Identifier("HI");
-    let initial = identifier.0;
-
-    let redefined_identifier: IdentifierRedefined = identifier.into();
-    let identifier_to_redefined_identifier: Identifier = redefined_identifier.into();
-    let converted = identifier_to_redefined_identifier.0;
-
-    assert_eq!(initial, converted);
+fn test_basic_unnamed_crates_io_remote_type() {
+    let uint: Uint<256, 4> = Uint::default();
+    let redefined_uint: UintRedefined<256, 4> = uint.clone().into();
+    let redefined_uint_to_uint = redefined_uint.into();
+    assert_eq!(uint, redefined_uint_to_uint);
 }

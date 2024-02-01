@@ -135,24 +135,24 @@ impl RemoteTypeText {
 }
 
 fn line_conditions(line: &str, type_searched: &RemoteTypeMeta) -> bool {
-    let is_struct = line.contains("struct ") || line.contains("pub struct ");
+    let is_struct = line.starts_with("struct ") || line.starts_with("pub struct ");
 
-    let is_enum = line.contains("enum ") || line.contains("pub enum ");
+    let is_enum = line.starts_with("enum ") || line.starts_with("pub enum ");
 
     // visibility options
     let visibility = is_struct || is_enum;
 
     // without generics
-    let case0 = visibility && line.contains(&format!(" {} ", type_searched.name)); // && !type_searched.has_generics;
+    let case0 =
+        visibility && (line.starts_with(&format!("enum {} ", type_searched.name)) || line.contains(&format!("struct {} ", type_searched.name))); // && !type_searched.has_generics;
 
     // with generics
-    let case1 = visibility && line.contains(&format!(" {}<", type_searched.name)); // && type_searched.has_generics;
+    let case1 =
+        visibility && (line.starts_with(&format!("enum {}<", type_searched.name)) || line.contains(&format!("struct {}<", type_searched.name))); // && type_searched.has_generics;
 
-    /*
-    if line.contains("Identifier") && line.starts_with("pub struct") {
-        panic!("HAHAHA\n {}\n\nis_struct: {is_struct}\nis_enum: {is_enum}\nvisibility: {visibility}\n", line);
-    }
-     */
+    //if line.contains("CompactUint") && line.starts_with("pub struct") {
+    //   panic!("HAHAHA\n {}\n\nis_struct: {is_struct}\nis_enum: {is_enum}\nvisibility: {visibility}\ncase0:{case0}\ncase1: {case1}", line);
+    //}
 
     case0 || case1
 }

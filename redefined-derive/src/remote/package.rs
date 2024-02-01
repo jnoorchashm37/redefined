@@ -37,7 +37,7 @@ impl Package {
 
                 if found && line.starts_with("source = ") {
                     let (url, kind) = if line.contains("https://github.com/rust-lang/crates.io-index") {
-                        (Some(Default::default()), PackageKind::CratesIo("https://github.com/rust-lang/crates.io-index".to_string()))
+                        (Some(Default::default()), PackageKind::CratesIo(format!("https://crates.io/api/v1/crates/{package}")))
                     } else {
                         (Some(line.replace("source = ", "").replace("git+", "")), PackageKind::Github)
                     };
@@ -60,21 +60,22 @@ impl Package {
         panic!("Cound Not Parse Package: '{package}'")
     }
 
-    pub async fn get_registry_url(&mut self) -> reqwest::Result<()> {
+    pub async fn get_registry_url(&mut self, web_client: &reqwest::Client) -> reqwest::Result<String> {
         let url = self.kind.crates_io_registry_url();
 
-        let crates_io_text = reqwest::get(url)
+        let crates_io_text = web_client
+            .get(&url)
+            .header("User-Agent", "request")
+            .send()
             .await?
             .text()
             .await
             .expect("Could not deserialize crates-io kind to text");
 
         let crates_io: CratesIoCallRequest =
-            serde_json::from_str(&crates_io_text).expect(&format!("Could not deserialize crates-io kind for text: {}", crates_io_text));
+            serde_json::from_str(&crates_io_text).expect(&format!("Could not deserialize crates-io kind for url: {}\ntext: {}", url, crates_io_text));
 
-        self.root_url = crates_io.crate_map.homepage;
-
-        Ok(())
+        Ok(crates_io.crate_map.homepage)
     }
 }
 
@@ -152,28 +153,44 @@ impl GithubApiUrls {
 
 impl From<RemoteType> for GithubApiUrls {
     fn from(value: RemoteType) -> Self {
-        let split_commit = value
-            .package
-            .root_url
-            .split("#")
-            .into_iter()
-            .collect::<Vec<_>>();
-        let commit = split_commit
-            .last()
-            .expect(&format!("Could not find github commit hash for package {:?}", value))
-            .to_string();
+        let (commit, mut split_owner) = if value.package.kind.is_crates_io() {
+            let split_owner = value
+                .package
+                .root_url
+                .split("/")
+                .into_iter()
+                .collect::<Vec<_>>();
 
-        let mut split_owner = split_commit
-            .first()
-            .expect(&format!("Could not parse owner/repo for package {:?}", value))
-            .split("/")
-            .into_iter()
-            .collect::<Vec<_>>();
+            ("main".to_string(), split_owner)
+        } else {
+            let split_commit = value
+                .package
+                .root_url
+                .split("#")
+                .into_iter()
+                .collect::<Vec<_>>();
+            let commit = split_commit
+                .last()
+                .expect(&format!("Could not find github commit hash for package {:?}", value))
+                .to_string();
+
+            let split_owner = split_commit
+                .first()
+                .expect(&format!("Could not parse owner/repo for package {:?}", value))
+                .split("/")
+                .into_iter()
+                .collect::<Vec<_>>();
+
+            (commit, split_owner)
+        };
 
         let repo = split_owner
             .pop()
             .expect(&format!("Could not parse repo for package {:?}", value))
             .to_string();
+
+        //panic!("Could not parse owner for package {:?}", value.package.root_url);
+        //panic!("Could not parse owner for package {:?}", split_owner);
 
         let owner = split_owner
             .pop()

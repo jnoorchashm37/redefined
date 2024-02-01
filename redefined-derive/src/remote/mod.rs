@@ -13,10 +13,10 @@ use self::{fetch::RemoteTypeText, package::GithubApiUrls, types::RemoteType};
 use crate::remote::{fetch::GithubFetcher, types::RemoteTypeMeta};
 
 pub fn expand_redefined_remote(input: TokenStream) -> syn::Result<TokenStream> {
-    let parsed: RemoteType = syn::parse2(input)?;
+    let mut parsed: RemoteType = syn::parse2(input)?;
     let remote_type_meta = RemoteTypeMeta::new(&parsed);
 
-    let (remote_type_text, file_cache_path_to_write) = get_remote_type(&parsed, &remote_type_meta);
+    let (remote_type_text, file_cache_path_to_write) = get_remote_type(&mut parsed, &remote_type_meta);
 
     let tokens = parse_remote_type_text(&remote_type_text, &remote_type_meta);
 
@@ -37,20 +37,23 @@ fn parse_remote_type_text(remote_type_text: &str, meta: &RemoteTypeMeta) -> syn:
 
         #[derive(Redefined)]
         #[redefined(#remote_type)]
+        #[redefined_attr(transmute)]
         #struct_def
     };
 
     Ok(tokens)
 }
 
-fn get_remote_type(parsed: &RemoteType, remote_type_meta: &RemoteTypeMeta) -> (String, Option<String>) {
+fn get_remote_type(parsed: &mut RemoteType, remote_type_meta: &RemoteTypeMeta) -> (String, Option<String>) {
     let rt = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .expect("Could not build tokio rt");
 
+    let web_client = reqwest::Client::new();
     if parsed.package.kind.is_crates_io() {
-        rt.block_on(parsed.package.clone().get_registry_url())
+        parsed.package.root_url = rt
+            .block_on(parsed.package.get_registry_url(&web_client))
             .expect("Could not get registry url");
     }
 
@@ -59,8 +62,6 @@ fn get_remote_type(parsed: &RemoteType, remote_type_meta: &RemoteTypeMeta) -> (S
     if github_api_urls.check_file_cache() {
         (RemoteTypeText::parse_file_cache(&github_api_urls.file_cache_path).type_text, None)
     } else {
-        let web_client = reqwest::Client::new();
-
         let all_urls = rt
             .block_on(github_api_urls.get_all_urls(&web_client))
             .expect(&format!("Could not get url github urls for package: {:?}", parsed));

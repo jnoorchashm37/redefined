@@ -16,13 +16,13 @@ pub fn workspace_dir() -> std::path::PathBuf {
     cargo_path.parent().unwrap().to_path_buf()
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct CratesIoCallRequest {
     #[serde(rename = "crate")]
     pub crate_map: CratesIoCall,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct CratesIoCall {
     pub homepage: String,
 }
