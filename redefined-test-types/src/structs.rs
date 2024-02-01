@@ -62,13 +62,13 @@ pub struct GenericLifetimeStruct<'a, 'b> {
     pub d: &'b [i128; 10],
 }
 
-impl<'a, 'b> GenericLifetimeStruct<'a, 'b> {
-    pub fn new() -> Self {
+impl<'a, 'b> Default for GenericLifetimeStruct<'a, 'b> {
+    fn default() -> Self {
         Self { p: &100, d: &[0; 10] }
     }
 }
 
-/// transmute struct A
+/// transmute struct 1
 #[derive(Debug, Clone, PartialEq)]
 pub struct TransmuteStructA<X, Y> {
     p: ComplexEnumA,
@@ -76,15 +76,23 @@ pub struct TransmuteStructA<X, Y> {
 }
 
 /// complex struct 1
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct ComplexStructA {
+    pub n:       i128,
+    pub inner_a: PrivateFieldStruct,
+    pub inner_b: Vec<BasicStruct>,
+}
+
+/// complex struct 2
 #[derive(Debug, Clone, PartialEq)]
-pub struct ComplexStructA<'a, 'b, const XVAL: usize, X, Y, Z> {
+pub struct ComplexStructB<'a, 'b, const XVAL: usize, X, Y, Z> {
     pub p: &'a u64,
     pub d: &'b [i128; XVAL],
     k:     HashMap<u64, (X, Y)>,
     t:     TransmuteStructA<Y, Z>,
 }
 
-impl<'a, 'b, const XVAL: usize, X, Y, Z> ComplexStructA<'a, 'b, XVAL, X, Y, Z>
+impl<'a, 'b, const XVAL: usize, X, Y, Z> ComplexStructB<'a, 'b, XVAL, X, Y, Z>
 where
     Y: Default + Clone,
     X: Clone,

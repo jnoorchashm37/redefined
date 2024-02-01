@@ -1,117 +1,103 @@
-use redefined_derive::Redefined;
-use redefined_test_types::structs::BasicStruct;
+use redefined_test_types::structs::*;
 
-use crate::RedefinedConvert;
+use crate::{struct_test, Redefined, RedefinedConvert};
 
-/*
+mod derive_source {
+    use super::*;
 
+    /// basic struct
+    #[derive(Debug, Clone, PartialEq, Default, Redefined)]
+    #[redefined(BasicStruct)]
+    pub struct BasicStructA {
+        pub val1: u64,
+        pub val2: f64,
+        pub val3: String,
+    }
 
+    /// struct with type generics
+    #[derive(Debug, Clone, PartialEq, Default, Redefined)]
+    #[redefined(GenericTypeStruct)]
+    pub struct GenericTypeStructA<X, Y> {
+        pub p:    u64,
+        pub d:    X,
+        pub vals: Vec<Y>,
+    }
 
+    /// struct with constant generics
+    #[derive(Debug, Clone, PartialEq, Redefined)]
+    #[redefined(GenericConstantStruct)]
+    pub struct GenericConstantStructA<const XVAL: usize> {
+        pub p: u64,
+        pub d: [i128; XVAL],
+    }
 
+    /// struct with lifetime generics
+    #[derive(Debug, Clone, PartialEq, Redefined)]
+    #[redefined(GenericLifetimeStruct)]
+    pub struct GenericLifetimeStructA<'a, 'b> {
+        pub p: &'a u64,
+        pub d: &'b [i128; 10],
+    }
 
-Basic struct
-*/
-
-#[derive(Debug, Clone, PartialEq, Default)]
-pub struct StructA {
-    pub p:    u64,
-    pub d:    u64,
-    pub vals: Vec<String>,
+    struct_test!(BasicStructA, BasicStruct);
+    struct_test!((GenericTypeStructA, String, u64), GenericTypeStruct);
+    struct_test!((GenericConstantStructA, 100), GenericConstantStruct, { GenericConstantStruct::new([2; 100]) });
+    struct_test!(GenericLifetimeStructA, GenericLifetimeStruct);
 }
 
-#[derive(Debug, Clone, PartialEq, Default, Redefined)]
-#[redefined(StructA)]
-pub struct StructB {
-    pub p:    u64,
-    pub d:    u64,
-    pub vals: Vec<String>,
-}
+mod derive_no_source {
+    use super::*;
 
-#[test]
-fn test_struct() {
-    let struct_a = StructA::default();
-    let struct_b: StructB = struct_a.clone().into();
-    let struct_b_to_a: StructA = struct_b.into();
-    assert_eq!(struct_b_to_a, struct_a);
-}
+    /// basic struct
+    #[derive(Debug, Clone, PartialEq, Default, Redefined)]
+    pub struct BasicStructA {
+        pub val1: u64,
+        pub val2: f64,
+        pub val3: String,
+    }
 
-/*
+    /// struct with type generics
+    #[derive(Debug, Clone, PartialEq, Default, Redefined)]
+    pub struct GenericTypeStructA<X, Y> {
+        pub p:    u64,
+        pub d:    X,
+        pub vals: Vec<Y>,
+    }
 
+    impl<X, Y> GenericTypeStructA<X, Y> {
+        pub fn new(d: X, vals: Vec<Y>) -> Self {
+            Self { p: Default::default(), d, vals }
+        }
+    }
 
+    /// struct with constant generics
+    #[derive(Debug, Clone, PartialEq, Redefined)]
+    pub struct GenericConstantStructA<const XVAL: usize> {
+        pub p: u64,
+        pub d: [i128; XVAL],
+    }
 
+    impl<const XVAL: usize> GenericConstantStructA<XVAL> {
+        pub fn new(d: [i128; XVAL]) -> Self {
+            Self { p: Default::default(), d }
+        }
+    }
 
+    /// struct with lifetime generics
+    #[derive(Debug, Clone, PartialEq, Redefined)]
+    pub struct GenericLifetimeStructA<'a, 'b> {
+        pub p: &'a u64,
+        pub d: &'b [i128; 10],
+    }
 
-Struct with unnamed fields
-*/
+    impl<'a, 'b> Default for GenericLifetimeStructA<'a, 'b> {
+        fn default() -> Self {
+            Self { p: &100, d: &[0; 10] }
+        }
+    }
 
-#[derive(Debug, Clone, PartialEq, Default)]
-pub struct UnnamedStructA(u64, String);
-
-#[derive(Debug, Clone, PartialEq, Default, Redefined)]
-#[redefined(UnnamedStructA)]
-pub struct UnnamedStructB(u64, String);
-
-#[test]
-fn test_unnamed_struct() {
-    let struct_a = UnnamedStructA::default();
-    let struct_b: UnnamedStructB = struct_a.clone().into();
-    let struct_b_to_a: UnnamedStructA = struct_b.into();
-    assert_eq!(struct_b_to_a, struct_a);
-}
-
-/*
-
-
-
-
-
-Struct with source in another crate (redefined/outside-crate)
-*/
-
-#[derive(Debug, Clone, PartialEq, Default, Redefined)]
-#[redefined(BasicStruct)]
-pub struct OutsideStructB {
-    pub val1: u64,
-    pub val2: f64,
-    pub val3: String,
-}
-
-#[test]
-fn test_outside_crate_struct() {
-    let struct_a = BasicStruct::default();
-    let struct_b: OutsideStructB = struct_a.clone().into();
-    let struct_b_to_a: BasicStruct = struct_b.into();
-    assert_eq!(struct_b_to_a, struct_a);
-}
-
-/*
-
-
-
-
-
-Complex struct
-*/
-
-#[derive(Debug, Clone, PartialEq, Default)]
-pub struct ComplexStructA {
-    pub n:       i128,
-    pub inner_a: StructA,
-    pub inner_b: Vec<BasicStruct>,
-}
-
-#[derive(Debug, Clone, PartialEq, Default, Redefined)]
-#[redefined(ComplexStructA)]
-pub struct ComplexStructB {
-    pub n:       i128,
-    pub inner_a: StructB,
-    pub inner_b: Vec<OutsideStructB>,
-}
-
-#[test]
-fn test_complex_struct() {
-    let struct_a = ComplexStructA::default();
-    let struct_b: ComplexStructB = struct_a.clone().into();
-    let struct_b_to_a: ComplexStructA = struct_b.into();
-    assert_eq!(struct_b_to_a, struct_a);
+    struct_test!(BasicStructARedefined, BasicStructA);
+    struct_test!((GenericTypeStructARedefined, String, u64), GenericTypeStructA);
+    struct_test!((GenericConstantStructARedefined, 100), GenericConstantStructA, { GenericConstantStructA::new([2; 100]) });
+    struct_test!(GenericLifetimeStructARedefined, GenericLifetimeStructA);
 }
