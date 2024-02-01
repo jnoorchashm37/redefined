@@ -1,5 +1,5 @@
 use redefined_derive::Redefined;
-use redefined_outside_crate_tests::derive::{ComplexOutsideEnumA, OutsideStructA};
+use redefined_outside_crate_tests::{ComplexOutsideEnumA, OutsideStructA};
 
 use super::r#struct::{ComplexStructA, ComplexStructB, OutsideStructB};
 use crate::RedefinedConvert;

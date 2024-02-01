@@ -1,5 +1,5 @@
 use redefined_derive::Redefined;
-use redefined_outside_crate_tests::derive::{NonPubFieldStructA, TransmuteStructA};
+use redefined_outside_crate_tests::{NonPubFieldStructA, TransmuteStructA};
 
 use crate::{
     tests::{attributes::to_from_src::ToFromSourceFieldStructB, generics::GenericStructB, r#enum::ComplexOutsideEnumB},

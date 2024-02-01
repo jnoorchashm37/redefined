@@ -1,5 +1,5 @@
 use redefined_derive::Redefined;
-use redefined_outside_crate_tests::derive::OutsideStructA;
+use redefined_outside_crate_tests::OutsideStructA;
 
 use crate::RedefinedConvert;
 

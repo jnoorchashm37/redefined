@@ -12,14 +12,11 @@ redefined-derive = { path = "../redefined-derive" }
 
 
 [dev-dependencies]
-redefined-outside-crate-tests = { git = "https://github.com/0xlagrange/redefined", branch = "remote" }
+# remote github
+redefined-tests = { git = "https://github.com/0xlagrange/redefined", branch = "remote" }
 
 # remote crate-io
-primitive-types = "0.12"
 ruint = "1.11.1"
-
-# remote github
-clickhouse = { git = "https://github.com/SorellaLabs/clickhouse.rs" }
 
 # misc
 paste = "1.0.14"

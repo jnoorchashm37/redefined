@@ -1,8 +1,13 @@
 [workspace]
 members = [
     "redefined",
-    "redefined-derive"
+    "redefined-derive", 
+    "redefined-tests"
 ]
 
 
 resolver = "2"
+
+
+
+
