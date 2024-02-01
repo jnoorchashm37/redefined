@@ -106,8 +106,17 @@ mod derive_no_source {
         }
     }
 
+    /// complex struct 1
+    #[derive(Debug, Clone, PartialEq, Redefined)]
+    pub struct ComplexStructAA<'a> {
+        pub n:       i128,
+        pub inner_a: GenericLifetimeStructARedefined<'a, 'a>,
+        pub inner_b: Vec<BasicStructARedefined>,
+    }
+
     struct_test!(BasicStructARedefined, BasicStructA);
     struct_test!((GenericTypeStructARedefined, String, u64), GenericTypeStructA);
     struct_test!((GenericConstantStructARedefined, 100), GenericConstantStructA, { GenericConstantStructA::new([2; 100]) });
     struct_test!(GenericLifetimeStructARedefined, GenericLifetimeStructA);
+    struct_test!(ComplexStructAARedefined, ComplexStructAA);
 }
