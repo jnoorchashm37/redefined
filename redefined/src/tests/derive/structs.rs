@@ -1,5 +1,5 @@
 use redefined_derive::Redefined;
-use redefined_outside_crate_tests::OutsideStructA;
+use redefined_test_types::structs::BasicStruct;
 
 use crate::RedefinedConvert;
 
@@ -69,7 +69,7 @@ Struct with source in another crate (redefined/outside-crate)
 */
 
 #[derive(Debug, Clone, PartialEq, Default, Redefined)]
-#[redefined(OutsideStructA)]
+#[redefined(BasicStruct)]
 pub struct OutsideStructB {
     pub val1: u64,
     pub val2: f64,
@@ -78,9 +78,9 @@ pub struct OutsideStructB {
 
 #[test]
 fn test_outside_crate_struct() {
-    let struct_a = OutsideStructA::default();
+    let struct_a = BasicStruct::default();
     let struct_b: OutsideStructB = struct_a.clone().into();
-    let struct_b_to_a: OutsideStructA = struct_b.into();
+    let struct_b_to_a: BasicStruct = struct_b.into();
     assert_eq!(struct_b_to_a, struct_a);
 }
 
@@ -97,7 +97,7 @@ Complex struct
 pub struct ComplexStructA {
     pub n:       i128,
     pub inner_a: StructA,
-    pub inner_b: Vec<OutsideStructA>,
+    pub inner_b: Vec<BasicStruct>,
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Redefined)]

@@ -36,11 +36,23 @@ pub struct GenericTypeStruct<X, Y> {
     pub vals: Vec<Y>,
 }
 
+impl<X, Y> GenericTypeStruct<X, Y> {
+    fn new(d: X, vals: Vec<Y>) -> Self {
+        Self { p: Default::default(), d, vals }
+    }
+}
+
 /// struct with constant generics
 #[derive(Debug, Clone, PartialEq)]
 pub struct GenericConstantStruct<const XVAL: usize> {
     pub p: u64,
     pub d: [i128; XVAL],
+}
+
+impl<const XVAL: usize> GenericConstantStruct<XVAL> {
+    fn new(d: [i128; XVAL]) -> Self {
+        Self { p: Default::default(), d }
+    }
 }
 
 /// struct with constant generics
@@ -50,6 +62,12 @@ pub struct GenericLifetimeStruct<'a, 'b> {
     pub d: &'b [i128; 10],
 }
 
+impl<'a, 'b> GenericLifetimeStruct<'a, 'b> {
+    fn new() -> Self {
+        Self { p: &100, d: &[0; 10] }
+    }
+}
+
 /// transmute struct A
 #[derive(Debug, Clone, PartialEq)]
 pub struct TransmuteStructA<X, Y> {
@@ -57,7 +75,7 @@ pub struct TransmuteStructA<X, Y> {
     d: GenericTypeStruct<X, Y>,
 }
 
-/// struct with constant generics
+/// complex struct 1
 #[derive(Debug, Clone, PartialEq)]
 pub struct ComplexStructA<'a, 'b, const XVAL: usize, X, Y, Z> {
     pub p: &'a u64,

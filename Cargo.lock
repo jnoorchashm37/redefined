@@ -1102,7 +1102,7 @@ dependencies = [
  "paste",
  "quote",
  "redefined-derive",
- "redefined-tests",
+ "redefined-test-types 0.1.0 (git+https://github.com/0xlagrange/redefined?branch=remote)",
  "ruint",
 ]
 
@@ -1125,9 +1125,9 @@ name = "redefined-test-types"
 version = "0.1.0"
 
 [[package]]
-name = "redefined-tests"
+name = "redefined-test-types"
 version = "0.1.0"
-source = "git+https://github.com/0xlagrange/redefined?branch=remote#3d834262d4ef18fb1001e20414541e27c4d27e5f"
+source = "git+https://github.com/0xlagrange/redefined?branch=remote#87b0c8d0cb4e84c07e2080797f9dd572a744d217"
 
 [[package]]
 name = "redox_syscall"

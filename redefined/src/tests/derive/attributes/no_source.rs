@@ -1,7 +1,7 @@
 use std::default;
 
 use redefined_derive::Redefined;
-use redefined_outside_crate_tests::OutsideStructA;
+use redefined_test_types::structs::BasicStruct;
 
 use crate::{tests::r#struct::OutsideStructB, RedefinedConvert};
 /*
@@ -22,9 +22,9 @@ pub struct SelfSourceStructA<X, Y> {
 
 #[test]
 fn test_self_source_struct() {
-    let struct_a: SelfSourceStructA<u64, OutsideStructA> = SelfSourceStructA::default();
+    let struct_a: SelfSourceStructA<u64, BasicStruct> = SelfSourceStructA::default();
     let struct_b: SelfSourceStructARedefined<u64, OutsideStructB> = SelfSourceStructARedefined::from_source(struct_a.clone());
-    let struct_b_to_a: SelfSourceStructA<u64, OutsideStructA> = struct_b.to_source();
+    let struct_b_to_a: SelfSourceStructA<u64, BasicStruct> = struct_b.to_source();
     assert_eq!(struct_b_to_a, struct_a);
 }
 /*
@@ -67,7 +67,7 @@ Uses a custom redefined type for 1 of the fields
 pub struct SelfSourceStructWithAttributeA<X> {
     p: String,
     #[redefined(field(OutsideStructB))]
-    c: OutsideStructA,
+    c: BasicStruct,
     d: Vec<X>,
 }
 
@@ -97,9 +97,9 @@ pub enum SelfSourceEnumA<X, Y> {
 
 #[test]
 fn test_self_source_enum() {
-    let enum_a: SelfSourceEnumA<u64, OutsideStructA> = SelfSourceEnumA::C(Default::default());
+    let enum_a: SelfSourceEnumA<u64, BasicStruct> = SelfSourceEnumA::C(Default::default());
     let enum_b: SelfSourceEnumARedefined<u64, OutsideStructB> = SelfSourceEnumARedefined::from_source(enum_a.clone());
-    let enum_b_to_a: SelfSourceEnumA<u64, OutsideStructA> = enum_b.to_source();
+    let enum_b_to_a: SelfSourceEnumA<u64, BasicStruct> = enum_b.to_source();
     assert_eq!(enum_b_to_a, enum_a);
 }
 /*
@@ -143,14 +143,14 @@ Uses a custom redefined type for 1 of the fields
 #[derive(Debug, Clone, PartialEq, Redefined)]
 pub enum SelfEnumWithAttributeA<X> {
     P,
-    C(#[redefined(field(OutsideStructB))] OutsideStructA),
+    C(#[redefined(field(OutsideStructB))] BasicStruct),
     D { d: Vec<X> },
 }
 
 #[test]
 fn test_self_source_enum_with_attr() {
-    let enum_a: SelfEnumWithAttributeA<OutsideStructA> = SelfEnumWithAttributeA::C(Default::default());
+    let enum_a: SelfEnumWithAttributeA<BasicStruct> = SelfEnumWithAttributeA::C(Default::default());
     let enum_b: SelfEnumWithAttributeARedefined<OutsideStructB> = SelfEnumWithAttributeARedefined::from_source(enum_a.clone());
-    let enum_b_to_a: SelfEnumWithAttributeA<OutsideStructA> = enum_b.to_source();
+    let enum_b_to_a: SelfEnumWithAttributeA<BasicStruct> = enum_b.to_source();
     assert_eq!(enum_b_to_a, enum_a);
 }
