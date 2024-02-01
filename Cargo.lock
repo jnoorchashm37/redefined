@@ -1102,7 +1102,7 @@ dependencies = [
  "paste",
  "quote",
  "redefined-derive",
- "redefined-tests 0.1.0 (git+https://github.com/0xlagrange/redefined?branch=remote)",
+ "redefined-tests",
  "ruint",
 ]
 
@@ -1121,7 +1121,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "redefined-tests"
+name = "redefined-test-types"
 version = "0.1.0"
 
 [[package]]

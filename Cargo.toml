@@ -2,7 +2,7 @@
 members = [
     "redefined",
     "redefined-derive", 
-    "redefined-tests"
+    "redefined-test-types"
 ]
 
 

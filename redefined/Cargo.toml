@@ -13,7 +13,7 @@ redefined-derive = { path = "../redefined-derive" }
 
 [dev-dependencies]
 # remote github
-redefined-tests = { git = "https://github.com/0xlagrange/redefined", branch = "remote" }
+redefined-test-types = { git = "https://github.com/0xlagrange/redefined", branch = "remote" }
 
 # remote crate-io
 ruint = "1.11.1"

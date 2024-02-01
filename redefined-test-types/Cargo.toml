@@ -1,11 +1,11 @@
 [package]
-name = "redefined-tests"
+name = "redefined-test-types"
 version = "0.1.0"
 edition = "2021"
 
 
 [lib]
-name = "redefined_tests"
+name = "redefined_test_types"
 
 
 [dependencies]
