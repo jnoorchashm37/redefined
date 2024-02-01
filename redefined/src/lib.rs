@@ -8,14 +8,25 @@ use std::{collections::HashMap, hash::Hash};
 
 pub use redefined_derive::*;
 
-pub trait RedefinedConvert<O> {
+pub trait RedefinedConvert<O>
+where
+    O: ?Sized,
+{
     fn from_source(src: O) -> Self;
 
     fn to_source(self) -> O;
 }
 
-//let this = &self;
-//unsafe { std::mem::transmute::<&Self, &O>(&self) }
+impl<'a, T> RedefinedConvert<&'a T> for &'a T {
+    fn from_source(src: &'a T) -> Self {
+        src
+    }
+
+    fn to_source(self) -> &'a T {
+        self
+    }
+}
+
 impl<T, F> RedefinedConvert<Option<T>> for Option<F>
 where
     F: RedefinedConvert<T>,
@@ -136,7 +147,30 @@ self_convert_redefined_with_fixed_size_array!(i8, i16, i32, i64, i128);
 self_convert_redefined_with_fixed_size_array!(f32, f64);
 self_convert_redefined_with_fixed_size_array!(String, char);
 self_convert_redefined_with_fixed_size_array!(bool);
-self_convert_redefined_sized!(str);
+
+impl<'a> RedefinedConvert<&'a str> for &str {
+    fn from_source(src: &'a str) -> Self {
+        let ptr = src.as_ptr();
+        let len = src.len();
+
+        unsafe {
+            let slice = std::slice::from_raw_parts(ptr, len);
+
+            std::str::from_utf8(slice).unwrap()
+        }
+    }
+
+    fn to_source(self) -> &'a str {
+        let ptr = self.as_ptr();
+        let len = self.len();
+
+        unsafe {
+            let slice = std::slice::from_raw_parts(ptr, len);
+
+            std::str::from_utf8(slice).unwrap()
+        }
+    }
+}
 
 /// 2 tuple
 impl<A, B, C, D> RedefinedConvert<(A, B)> for (C, D)

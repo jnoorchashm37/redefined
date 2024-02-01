@@ -13,7 +13,7 @@ use crate::{
     redefined_types::{r#enum::EnumContainer, r#struct::StructContainer},
 };
 
-pub struct Container<'a> {
+pub struct RedefinedContainer<'a> {
     source_type:            Ident,
     target_type:            Ident,
     source_generics_tokens: TokenStream,
@@ -24,7 +24,7 @@ pub struct Container<'a> {
     from_source_tokens:     TokenStream,
 }
 
-impl<'a> Container<'a> {
+impl<'a> RedefinedContainer<'a> {
     pub fn parse_sub_containers(outer: OuterContainer, input_data: &'a Data, input_generics: &'a Generics) -> syn::Result<Self> {
         let source_type = outer.source_type.clone().unwrap();
 

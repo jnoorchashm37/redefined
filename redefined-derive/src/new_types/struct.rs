@@ -90,7 +90,6 @@ pub fn parse_field(field: Field) -> syn::Result<TokenStream> {
 pub fn parse_type_to_redefined(src_type: Type, new_type_name: Option<Ident>) -> Type {
     /*
     match &src_type {
-
         Type::BareFn(_) => unimplemented!(),
         Type::Group(_) => unimplemented!(),
         Type::ImplTrait(_) => unimplemented!(),
@@ -108,9 +107,24 @@ pub fn parse_type_to_redefined(src_type: Type, new_type_name: Option<Ident>) -> 
     */
 
     match src_type {
-        //  Type::Array(a) => parse_type_to_redefined(&mut a.elem, new_type_name),
-        // Type::Reference(r) => parse_type_to_redefined(&mut r.elem, new_type_name),
-        // Type::Slice(s) => parse_type_to_redefined(&mut s.elem, new_type_name),
+        Type::Array(a) => {
+            let mut array = a.clone();
+            let new_type = parse_type_to_redefined(*a.elem, new_type_name);
+            array.elem = Box::new(new_type);
+            Type::Array(array)
+        }
+        Type::Reference(r) => {
+            let mut refer = r.clone();
+            let new_type = parse_type_to_redefined(*r.elem, new_type_name);
+            refer.elem = Box::new(new_type);
+            Type::Reference(refer)
+        }
+        Type::Slice(s) => {
+            let mut slice = s.clone();
+            let new_type = parse_type_to_redefined(*s.elem, new_type_name);
+            slice.elem = Box::new(new_type);
+            Type::Slice(slice)
+        }
         Type::Path(p) => {
             let mut path = p.clone();
             let seg = path.path.segments.first_mut();

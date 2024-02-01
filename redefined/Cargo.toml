@@ -9,9 +9,19 @@ name = "redefined"
 [dependencies]
 # derive
 redefined-derive = { path = "../redefined-derive" }
+
+
+[dev-dependencies]
 redefined-outside-crate-tests = { path = "./outside-crate" }
+
+# remote crate-io
+primitive-types = "0.12"
+
+# remote github
+clickhouse = { git = "https://github.com/SorellaLabs/clickhouse.rs" }
 
 
 [features]
-default = ["unsafe"]
+default = ["unsafe", "remote"]
 unsafe = ["redefined-derive/unsafe"]
+remote = ["redefined-derive/remote"]
