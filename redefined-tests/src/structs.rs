@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+
+use crate::enums::ComplexEnumA;
+
 /// basic struct
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct BasicStruct {
@@ -47,15 +51,44 @@ pub struct GenericLifetimeStruct<'a, 'b> {
 }
 
 /// transmute struct A
-#[derive(Debug, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TransmuteStructA<X, Y> {
-    p: ComplexOutsideEnumA,
-    d: GenericStructA<X, Y>,
+    p: ComplexEnumA,
+    d: GenericTypeStruct<X, Y>,
 }
 
 /// struct with constant generics
 #[derive(Debug, Clone, PartialEq)]
-pub struct ComplexStructB<'a, 'b> {
+pub struct ComplexStructA<'a, 'b, const XVAL: usize, X, Y, Z> {
     pub p: &'a u64,
-    pub d: &'b [i128; 10],
+    pub d: &'b [i128; XVAL],
+    k:     HashMap<u64, (X, Y)>,
+    t:     TransmuteStructA<Y, Z>,
+}
+
+impl<'a, 'b, const XVAL: usize, X, Y, Z> ComplexStructA<'a, 'b, XVAL, X, Y, Z>
+where
+    Y: Default + Clone,
+    X: Clone,
+    Z: Clone,
+{
+    pub fn new(p: &'a u64, d: &'b [i128; XVAL]) -> Self {
+        Self {
+            p,
+            d,
+            k: Default::default(),
+            t: TransmuteStructA {
+                p: ComplexEnumA::C { value: Default::default() },
+                d: GenericTypeStruct { p: Default::default(), d: Default::default(), vals: Vec::new() },
+            },
+        }
+    }
+
+    pub fn get_k(&self) -> HashMap<u64, (X, Y)> {
+        self.k.clone()
+    }
+
+    pub fn get_t(&self) -> TransmuteStructA<Y, Z> {
+        self.t.clone()
+    }
 }

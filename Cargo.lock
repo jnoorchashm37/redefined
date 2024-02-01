@@ -1102,7 +1102,7 @@ dependencies = [
  "paste",
  "quote",
  "redefined-derive",
- "redefined-outside-crate-tests",
+ "redefined-tests 0.1.0 (git+https://github.com/0xlagrange/redefined?branch=remote)",
  "ruint",
 ]
 
@@ -1121,13 +1121,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "redefined-outside-crate-tests"
+name = "redefined-tests"
 version = "0.1.0"
-source = "git+https://github.com/0xlagrange/redefined?branch=remote#452c5a4179d87be1e50bfc63f4f2bae3b8c965fe"
 
 [[package]]
 name = "redefined-tests"
 version = "0.1.0"
+source = "git+https://github.com/0xlagrange/redefined?branch=remote#3d834262d4ef18fb1001e20414541e27c4d27e5f"
 
 [[package]]
 name = "redox_syscall"
