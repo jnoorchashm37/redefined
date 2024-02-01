@@ -37,7 +37,7 @@ pub struct GenericTypeStruct<X, Y> {
 }
 
 impl<X, Y> GenericTypeStruct<X, Y> {
-    fn new(d: X, vals: Vec<Y>) -> Self {
+    pub fn new(d: X, vals: Vec<Y>) -> Self {
         Self { p: Default::default(), d, vals }
     }
 }
@@ -50,7 +50,7 @@ pub struct GenericConstantStruct<const XVAL: usize> {
 }
 
 impl<const XVAL: usize> GenericConstantStruct<XVAL> {
-    fn new(d: [i128; XVAL]) -> Self {
+    pub fn new(d: [i128; XVAL]) -> Self {
         Self { p: Default::default(), d }
     }
 }
@@ -63,7 +63,7 @@ pub struct GenericLifetimeStruct<'a, 'b> {
 }
 
 impl<'a, 'b> GenericLifetimeStruct<'a, 'b> {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self { p: &100, d: &[0; 10] }
     }
 }

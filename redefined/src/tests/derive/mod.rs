@@ -48,6 +48,6 @@ pub struct GenericLifetimeStructA<'a, 'b> {
 }
 
 struct_test!(BasicStructA, BasicStruct);
-struct_test!(GenericTypeStructA, GenericTypeStruct);
-struct_test!(GenericConstantStructA, GenericConstantStruct, { GenericConstantStructA::new([100; 2]) });
+struct_test!(GenericTypeStructA, GenericTypeStruct, { GenericTypeStruct::new("HI".to_string(), [100; 2]) });
+struct_test!(GenericConstantStructA, GenericConstantStruct, { GenericConstantStruct::new([100; 2]) });
 struct_test!(GenericLifetimeStructA, GenericLifetimeStruct);
