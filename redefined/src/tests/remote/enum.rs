@@ -1,30 +1,32 @@
-use clickhouse::{fixed_string::FixedString, sql::Identifier};
+use clickhouse::{sql::Identifier, Compression};
 use redefined_derive::{redefined_remote, Redefined};
 use ruint::Uint;
 
 use crate::RedefinedConvert;
 
 /*
-pub struct FixedString {
-    pub string: String,
+pub enum Compression {
+    None,
+    Lz4,
+    Lz4Hc(i32),
 }
 */
-redefined_remote!(FixedString : "clickhouse");
+redefined_remote!(Compression : "clickhouse");
 
 #[test]
-fn test_basic_named_github_remote_struct() {
-    let fixed_string = FixedString { string: "HI".to_string() };
-    let redefined_fixed_string: FixedStringRedefined = fixed_string.clone().into();
-    let redefined_fixed_string_to_fixed_string: FixedString = redefined_fixed_string.into();
+fn test_basic_named_github_remote_enum() {
+    let compression = Compression::Lz4Hc(100);
+    let redefined_compression: CompressionRedefined = compression.clone().into();
+    let redefined_compression_to_compression: Compression = redefined_compression.into();
 
-    assert_eq!(redefined_fixed_string_to_fixed_string, fixed_string);
+    assert_eq!(redefined_compression_to_compression, compression);
 }
 
 // pub struct Identifier<'a>(pub &'a str);
 redefined_remote!(Identifier : "clickhouse");
 
 #[test]
-fn test_basic_unnamed_github_remote_struct() {
+fn test_basic_unnamed_github_remote_enum() {
     let identifier = Identifier("HI");
     let initial = identifier.0;
 
@@ -43,7 +45,7 @@ pub struct Uint<const BITS: usize, const LIMBS: usize> {
 redefined_remote!(Uint : "ruint");
 
 #[test]
-fn test_basic_unnamed_crates_io_remote_struct() {
+fn test_basic_unnamed_crates_io_remote_enum() {
     let uint: Uint<256, 4> = Uint::default();
     let redefined_uint: UintRedefined<256, 4> = uint.clone().into();
     let redefined_uint_to_uint = redefined_uint.into();

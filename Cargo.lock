@@ -1307,7 +1307,9 @@ name = "redefined"
 version = "0.1.0"
 dependencies = [
  "clickhouse",
+ "paste",
  "primitive-types",
+ "quote",
  "redefined-derive",
  "redefined-outside-crate-tests",
  "ruint",
@@ -1330,6 +1332,7 @@ dependencies = [
 [[package]]
 name = "redefined-outside-crate-tests"
 version = "0.1.0"
+source = "git+https://github.com/0xlagrange/redefined?branch=remote#477ec6448ea8b10853f945b6b65e68c0a0a56531"
 
 [[package]]
 name = "redox_syscall"

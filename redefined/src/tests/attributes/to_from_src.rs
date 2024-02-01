@@ -1,5 +1,5 @@
 use redefined_derive::Redefined;
-use redefined_outside_crate_tests::NonPubFieldStructA;
+use redefined_outside_crate_tests::derive::NonPubFieldStructA;
 
 use crate::RedefinedConvert;
 
