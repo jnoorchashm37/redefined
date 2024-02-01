@@ -63,13 +63,16 @@ impl Package {
     pub async fn get_registry_url(&mut self) -> reqwest::Result<()> {
         let url = self.kind.crates_io_registry_url();
 
-        let res: CratesIoCallRequest = reqwest::get(url)
+        let crates_io_text = reqwest::get(url)
             .await?
-            .json()
+            .text()
             .await
-            .expect("Could not deserialize crates-io kind");
+            .expect("Could not deserialize crates-io kind to text");
 
-        self.root_url = res.crate_map.homepage;
+        let crates_io: CratesIoCallRequest =
+            serde_json::from_str(&crates_io_text).expect(&format!("Could not deserialize crates-io kind for text: {}", crates_io_text));
+
+        self.root_url = crates_io.crate_map.homepage;
 
         Ok(())
     }

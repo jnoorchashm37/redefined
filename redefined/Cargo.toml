@@ -16,6 +16,7 @@ redefined-outside-crate-tests = { path = "./outside-crate" }
 
 # remote crate-io
 primitive-types = "0.12"
+ruint = "1.11.1"
 
 # remote github
 clickhouse = { git = "https://github.com/SorellaLabs/clickhouse.rs" }

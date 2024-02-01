@@ -1,5 +1,6 @@
 use clickhouse::{fixed_string::FixedString, sql::Identifier};
 use redefined_derive::{redefined_remote, Redefined};
+use ruint::Uint;
 
 use crate::RedefinedConvert;
 
@@ -24,6 +25,25 @@ redefined_remote!(Identifier : "clickhouse");
 
 #[test]
 fn test_basic_unnamed_github_remote_type() {
+    let identifier = Identifier("HI");
+    let initial = identifier.0;
+
+    let redefined_identifier: IdentifierRedefined = identifier.into();
+    let identifier_to_redefined_identifier: Identifier = redefined_identifier.into();
+    let converted = identifier_to_redefined_identifier.0;
+
+    assert_eq!(initial, converted);
+}
+
+/*
+pub struct Uint<const BITS: usize, const LIMBS: usize> {
+    limbs: [u64; LIMBS],
+}
+*/
+redefined_remote!(Uint : "ruint");
+
+#[test]
+fn test_basic_usnnamed_github_remote_type() {
     let identifier = Identifier("HI");
     let initial = identifier.0;
 
