@@ -6,7 +6,7 @@ mod tests;
 
 use std::{collections::HashMap, hash::Hash};
 
-pub use redefined_derive::Redefined;
+pub use redefined_derive::*;
 
 pub trait RedefinedConvert<O>
 where

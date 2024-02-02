@@ -1,7 +1,6 @@
-use redefined_derive::{redefined_remote, Redefined};
 use redefined_test_types::structs::*;
 
-use crate::{struct_test, RedefinedConvert};
+use crate::{redefined_remote, struct_test, Redefined, RedefinedConvert};
 
 mod crates_io {
     use ruint::Uint;
