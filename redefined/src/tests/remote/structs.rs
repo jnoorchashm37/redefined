@@ -50,29 +50,20 @@ mod derives {
 }
 
 mod lol {
-    use alloy_primitives::FixedBytes;
+    use alloy_primitives::Bytes;
     use derive_more::{Deref, DerefMut, From, Index, IndexMut, IntoIterator};
     use reth_primitives::alloy_primitives;
 
     use crate::{redefined_remote, Redefined, RedefinedConvert};
 
-    redefined_remote!(
-        #[derive(
-            Debug,
-            Clone,
-            Copy,
-            PartialEq,
-            Eq,
-            PartialOrd,
-            Ord,
-            Hash,
-            Deref,
-            DerefMut,
-            From,
-            Index,
-            IndexMut,
-            IntoIterator
-        )]
-        FixedBytes : "alloy-primitives"
-    );
+    // redefined_remote!(
+    //     #[derive(
+    //         Debug,
+    //         Clone,
+    //         Copy,
+    //         PartialEq,
+    //         Eq,
+    //     )]
+    //     Bytes : "alloy-primitives"
+    // );
 }

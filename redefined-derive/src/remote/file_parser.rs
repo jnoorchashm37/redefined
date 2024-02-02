@@ -55,9 +55,12 @@ impl ParsedRemoteType {
 
 /// conditions whether a line is valid as the start of the target struct/enum
 fn line_conditions(line: &str, type_searched: &str) -> bool {
-    let is_struct = line.trim_start().starts_with("struct ") || line.trim_start().starts_with("pub struct ");
+    let is_struct = line.trim_start().starts_with("struct ")
+        || line.trim_start().starts_with("pub struct ")
+        || line.trim_start().starts_with("pub(crate) struct ");
 
-    let is_enum = line.trim_start().starts_with("enum ") || line.trim_start().starts_with("pub enum ");
+    let is_enum =
+        line.trim_start().starts_with("enum ") || line.trim_start().starts_with("pub enum ") || line.trim_start().starts_with("pub(crate) enum ");
 
     // visibility options
     let visibility = is_struct || is_enum;

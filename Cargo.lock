@@ -2025,6 +2025,7 @@ dependencies = [
 name = "redefined"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "derive_more",
  "paste",
  "quote",

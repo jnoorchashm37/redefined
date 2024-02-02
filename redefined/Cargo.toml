@@ -29,6 +29,7 @@ quote = "1.0.35"
 
 reth-primitives = { git = "https://github.com/paradigmxyz/reth", package = "reth-primitives", rev = "d8a9b58" }
 derive_more = "0.99.17"
+bytes = "1.5"
 
 [features]
 default = ["unsafe", "remote"]
