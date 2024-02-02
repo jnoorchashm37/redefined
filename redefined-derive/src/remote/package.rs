@@ -61,7 +61,7 @@ impl Package {
         panic!("Cound Not Parse Package: '{package}'")
     }
 
-    pub async fn get_registry_url(&mut self, web_client: &reqwest::Client) -> reqwest::Result<String> {
+    pub async fn get_registry_url(&self, web_client: &reqwest::Client) -> reqwest::Result<String> {
         let url = self.kind.crates_io_registry_url();
 
         let crates_io_text = web_client
@@ -75,8 +75,6 @@ impl Package {
 
         let crates_io: CratesIoCallRequest =
             serde_json::from_str(&crates_io_text).expect(&format!("Could not deserialize crates-io kind for url: {}\ntext: {}", url, crates_io_text));
-
-        panic!("CALL: {:?}", crates_io);
 
         Ok(crates_io.crate_map.repository)
     }
