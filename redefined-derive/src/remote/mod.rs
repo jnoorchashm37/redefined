@@ -86,13 +86,13 @@ impl RemoteType {
             return (ParsedRemoteType::parse_from_file_cache(&file_cache.cached_file).type_text, None)
         }
 
-        let sub_path = rt
-            .block_on(github_api_urls.get_file_subpath(&web_client, &self.package.package_name))
-            .expect(&format!("Could not get subpath from Cargo.toml for package: {:?}", github_api_urls));
-
-        if let Some(result) = file_cache.fetch_from_file_cache(&self.name.to_string(), &sub_path) {
+        if let Some(result) = file_cache.fetch_from_file_cache(&self.name.to_string(), &None) {
             (result.type_text, Some(file_cache.cached_file))
         } else {
+            let sub_path = rt
+                .block_on(github_api_urls.get_file_subpath(&web_client, &self.package.package_name))
+                .expect(&format!("Could not get subpath from Cargo.toml for package: {:?}", github_api_urls));
+
             let all_urls = rt
                 .block_on(github_api_urls.get_all_urls(&web_client))
                 .expect(&format!("Could not get url github urls for package: {:?}", self));

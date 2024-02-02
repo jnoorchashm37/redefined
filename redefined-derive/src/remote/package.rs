@@ -191,6 +191,8 @@ impl GithubApiUrls {
             }
         }
 
-        panic!("Could not find path in Cargo.toml for package: {target_path}");
+        //panic!("Could not find path in Cargo.toml for package: {target_path}");
+
+        Ok(None)
     }
 }
