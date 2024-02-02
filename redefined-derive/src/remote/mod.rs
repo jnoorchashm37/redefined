@@ -15,18 +15,27 @@ pub fn expand_redefined_remote(input: TokenStream) -> syn::Result<TokenStream> {
 }
 
 /// parses the remote type into tokens
-fn parse_remote_type_text(remote_type_name: &str, remote_type_text: &str, derives: Vec<Ident>) -> syn::Result<TokenStream> {
+fn parse_remote_type_text(remote_type_name: &str, remote_type_text: &str, derives: Vec<Ident>, no_impl: bool) -> syn::Result<TokenStream> {
     let remote_type_text = remote_type_text.replace(remote_type_name, &format!("{}Redefined", remote_type_name));
 
     let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
 
     let remote_type = Ident::new(remote_type_name, struct_def.span());
-    let tokens = quote! {
-
+    let tokens = if no_impl {
+        let mut derives = derives;
+        derives.retain(|d| d.to_string() != "Redefined");
+        quote! {
         #[derive(#(#derives),*)]
-        #[redefined(#remote_type)]
-        #[redefined_attr(transmute)]
         #struct_def
+        }
+    } else {
+        quote! {
+
+            #[derive(#(#derives),*)]
+            #[redefined(#remote_type)]
+            #[redefined_attr(transmute)]
+            #struct_def
+        }
     };
 
     Ok(tokens)
@@ -37,29 +46,23 @@ pub struct RemoteType {
     pub name:    Ident,
     pub package: Package,
     pub derives: Vec<Ident>,
+    pub no_impl: bool,
 }
 
 impl RemoteType {
     /// runs the remote type execution
     /// added for future use in fields of structs
-    pub fn execute(mut self) -> syn::Result<TokenStream> {
+    pub fn execute(self) -> syn::Result<TokenStream> {
         let derives = self.derives.clone();
 
-        let (remote_type_text, file_cache_path_to_write) = self.get_remote_type();
+        let remote_type_text = self
+            .package
+            .fetch_from_file_cache(&self.name.to_string())
+            .type_text;
 
-        let tokens = parse_remote_type_text(&self.name.to_string(), &remote_type_text, derives);
-
-        if let Some(path) = file_cache_path_to_write {
-            write_to_file_cache(&path, &remote_type_text);
-        }
+        let tokens = parse_remote_type_text(&self.name.to_string(), &remote_type_text, derives, self.no_impl);
 
         tokens
-    }
-
-    /// retrieves the remote type
-    fn get_remote_type(&mut self) -> (String, Option<String>) {
-        let result_type = self.package.fetch_from_file_cache(&self.name.to_string());
-        return (result_type.type_text, None)
     }
 }
 
@@ -97,6 +100,19 @@ impl Parse for RemoteType {
         let package = Package::new(package_name.value())
             .map_err(|_| syn::Error::new(package_name.span(), "Failed to parse the cargo lock for this package"))?;
 
-        Ok(Self { name, package, derives })
+        let mut no_impl = false;
+        if input.peek(Token![:]) {
+            input.parse::<Token![:]>()?;
+
+            let no_impl_ident: Ident = input
+                .parse()
+                .map_err(|e| syn::Error::new(e.span(), "Failed to parse no_impl ident - MUST BE 'no_impl'"))?;
+
+            if no_impl_ident.to_string() == "no_impl" {
+                no_impl = true
+            }
+        }
+
+        Ok(Self { name, package, derives, no_impl })
     }
 }
