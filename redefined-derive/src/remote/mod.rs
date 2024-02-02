@@ -64,7 +64,7 @@ fn get_remote_type(parsed: &mut RemoteType, remote_type_meta: &RemoteTypeMeta) -
         return (RemoteTypeText::parse_file_cache(&github_api_urls.file_cache_path).type_text, None)
     }
     if let Some((result, path)) = github_api_urls.fetch_from_file_cache(remote_type_meta) {
-        (result.type_text, Some(path))
+        (result.type_text, Some(format!("{path}/{}", remote_type_meta.name)))
     } else {
         let all_urls = rt
             .block_on(github_api_urls.get_all_urls(&web_client))
