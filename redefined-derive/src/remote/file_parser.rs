@@ -1,5 +1,3 @@
-use std::io::Read;
-
 use super::types::StructOrEnum;
 
 /// represents a parsed remote type
@@ -14,24 +12,6 @@ pub struct ParsedRemoteType {
 }
 
 impl ParsedRemoteType {
-    /// parse the text of a webpage
-    pub fn parse_from_file_cache(path: &str) -> Self {
-        let mut file_text = String::new();
-        std::fs::File::open(path)
-            .expect(&format!("Unable to read the file cache at path: {:?}", path))
-            .read_to_string(&mut file_text)
-            .expect(&format!("Unable to read the file cache to string at path: {:?}", path));
-
-        let kind = StructOrEnum::new_from_line(
-            &file_text
-                .lines()
-                .next()
-                .expect(&format!("File is empty in file cache: {}", path)),
-        );
-
-        Self { url_or_path: path.to_string(), type_text: file_text, kind }
-    }
-
     /// parse the text of a webpage
     pub fn parse_from_page(url: String, page_contents: String, type_searched: &str) -> Option<Self> {
         let mut lines = page_contents.lines();

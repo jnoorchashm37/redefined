@@ -1,13 +1,18 @@
-use std::io::BufRead;
+use std::{
+    fs::DirEntry,
+    io::{BufRead, Read},
+};
 
-use super::types::CratesIoCallRequest;
-use crate::remote::types::{workspace_dir, GithubApiFileTree};
+use super::{
+    file_parser::ParsedRemoteType,
+    types::{cargo_home_dir, get_all_files},
+};
+use crate::remote::types::workspace_dir;
 
 /// parsing of the package from crates-io OR github
 #[derive(Debug, Clone)]
 pub struct Package {
     pub package_name: String,
-    pub root_url:     String,
     pub version:      String,
     pub kind:         PackageKind,
 }
@@ -38,18 +43,14 @@ impl Package {
                 }
 
                 if found && line.starts_with("source = ") {
-                    let (url, kind) = if line.contains("https://github.com/rust-lang/crates.io-index") {
-                        (Some(Default::default()), PackageKind::CratesIo(format!("https://crates.io/api/v1/crates/{package}")))
+                    let kind = if line.contains("https://github.com/rust-lang/crates.io-index") {
+                        PackageKind::CratesIo(package.clone())
                     } else {
-                        (Some(line.replace("source = ", "").replace("git+", "")), PackageKind::Github)
+                        PackageKind::parse_github_repo(&line.replace("source = ", "").replace("git+", ""))
                     };
 
                     return Ok(Package {
                         package_name: package.clone(),
-                        root_url: url
-                            .expect(&format!("could not parse 'source' for package '{package}' in cargo lock"))
-                            .trim_matches('\"')
-                            .to_string(),
                         version: version
                             .expect(&format!("could not parse 'version' for package '{package}' in cargo lock"))
                             .trim_matches('\"')
@@ -63,136 +64,141 @@ impl Package {
         panic!("Cound Not Parse Package: '{package}'")
     }
 
-    pub async fn get_registry_url(&self, web_client: &reqwest::Client) -> reqwest::Result<String> {
-        let url = self.kind.crates_io_registry_url();
+    /// attempts the fetch the type from the cached files of the repo
+    pub fn fetch_from_file_cache(&self, type_searched: &str) -> ParsedRemoteType {
+        let package_dir = self.kind.fetch_from_cargo(&self.version);
 
-        let crates_io_text = web_client
-            .get(&url)
-            .header("User-Agent", "request")
-            .send()
-            .await?
-            .text()
-            .await
-            .expect("Could not deserialize crates-io kind to text");
+        let mut paths = Vec::new();
+        get_all_files(&package_dir, &mut paths);
 
-        let crates_io: CratesIoCallRequest =
-            serde_json::from_str(&crates_io_text).expect(&format!("Could not deserialize crates-io kind for url: {}\ntext: {}", url, crates_io_text));
+        let results = paths
+            .into_iter()
+            .filter_map(|path| {
+                let mut file = std::fs::File::open(&path).expect(&format!("Could not open file {:?} from cargo file cache", &path));
+                let mut file_contents = String::new();
+                file.read_to_string(&mut file_contents)
+                    .expect(&format!("Could not read file {:?} to string", path));
 
-        Ok(crates_io.crate_map.repository)
+                let p = path.as_path().to_str().unwrap().to_string();
+                ParsedRemoteType::parse_from_page(p.clone(), file_contents, type_searched)
+            })
+            .collect::<Vec<_>>();
+
+        if results.len() == 0 {
+            panic!("No Results From File Cache For Package: {:?}", self);
+        } else if results.len() > 1 {
+            panic!("Too Many Results From File Cache For Package: {:?}\nResults: {:?}", self, results);
+        } else {
+            results.first().unwrap().clone()
+        }
     }
 }
 
 #[derive(Debug, Clone)]
 pub enum PackageKind {
     CratesIo(String),
-    Github,
+    Github(String, String),
 }
 
 impl PackageKind {
-    pub fn crates_io_registry_url(&self) -> String {
+    fn parse_github_repo(url: &str) -> Self {
+        let split_commit = url.split("#").collect::<Vec<_>>();
+        let commit = split_commit
+            .last()
+            .expect(&format!("Could not find github commit hash for package {:?}", url))
+            .to_string();
+
+        let mut split_owner = split_commit
+            .first()
+            .expect(&format!("Could not parse owner/repo for package {:?}", url))
+            .split("/")
+            .collect::<Vec<_>>();
+
+        let repo_and_query = split_owner
+            .pop()
+            .expect(&format!("Could not parse repo/query for package {:?}", url))
+            .split("?")
+            .collect::<Vec<_>>();
+
+        let repo = repo_and_query
+            .first()
+            .expect(&format!("Could not parse repo for package {:?}", url))
+            .to_string()
+            .replace(".git", "");
+
+        Self::Github(repo, commit)
+    }
+
+    fn fetch_from_cargo(&self, version: &str) -> DirEntry {
         match self {
-            PackageKind::CratesIo(url) => url.clone(),
-            _ => unreachable!("Cannot be github"),
+            PackageKind::CratesIo(_) => self.fetch_from_cargo_crates_io(version),
+            PackageKind::Github(..) => self.fetch_from_cargo_git(),
         }
     }
 
-    pub fn is_crates_io(&self) -> bool {
-        match self {
-            PackageKind::CratesIo(_) => true,
-            PackageKind::Github => false,
-        }
-    }
-}
+    fn fetch_from_cargo_crates_io(&self, version: &str) -> DirEntry {
+        let package_name = match self {
+            PackageKind::CratesIo(p) => p,
+            _ => unreachable!("cannot fetch from github for crates-io"),
+        };
 
-/// retrieves github urls from crates-io
-#[derive(Debug, Clone)]
-pub struct GithubApiUrls {
-    pub root_url:                String,
-    pub file_tree_url:           String,
-    pub base_contents_url:       String,
-    pub commit:                  String,
-    // check if the package is sub-crate
-    pub check_toml_for_sub_path: bool,
-}
+        let mut cargo_dir_path = cargo_home_dir();
+        cargo_dir_path.push("registry/src");
 
-impl GithubApiUrls {
-    pub async fn get_all_urls(&self, web_client: &reqwest::Client) -> reqwest::Result<Vec<(String, String)>> {
-        let tree_text = web_client
-            .get(&self.file_tree_url)
-            .header("User-Agent", "request")
-            .send()
-            .await?
-            .text()
-            .await
-            .expect("Could not deserialize all url path results to text");
+        let all_dirs = std::fs::read_dir(&cargo_dir_path)
+            .expect(&format!("Could not read cargo crates-io dir for {:?}", cargo_dir_path))
+            .collect::<Result<Vec<_>, _>>()
+            .expect(&format!("Coult not read subdirectories for: {:?}", cargo_dir_path));
 
-        let tree: GithubApiFileTree = serde_json::from_str(&tree_text).expect(&format!(
-            "Could not deserialize all text of all url path results from file {} to text to GithubApiFileTree: {tree_text}",
-            self.file_tree_url
-        ));
+        let dir_value = all_dirs
+            .first()
+            .expect(&format!("No subdirectories for: {:?}", cargo_dir_path));
+        let crates_io_path = dir_value.path();
 
-        let all_paths = tree
-            .tree
+        let project_crate = std::fs::read_dir(&crates_io_path)
+            .expect(&format!("Could not read cargo crates-io dir for {:?}", crates_io_path))
+            .collect::<Result<Vec<_>, _>>()
+            .expect(&format!("Coult not read subdirectories for: {:?}", crates_io_path))
             .into_iter()
-            .map(|path| path.path)
-            .filter(|p| p.ends_with(".rs"))
-            .map(|path| (format!("{}{path}", self.base_contents_url), path.replace("/", "_")))
-            .collect();
+            .find(|c| c.path().is_dir() && c.file_name().to_str().unwrap() == &format!("{package_name}-{version}"))
+            .expect(&format!("Could not find crates-io package with name: {package_name}-{version}"));
 
-        Ok(all_paths)
+        project_crate
     }
 
-    /// gets the sub-crate path from the cargo toml
-    pub async fn get_file_subpath(&self, web_client: &reqwest::Client, target_path: &str) -> reqwest::Result<Option<String>> {
-        let cargo_toml = web_client
-            .get(&format!("{}Cargo.toml", self.base_contents_url))
-            .header("User-Agent", "request")
-            .send()
-            .await?
-            .text()
-            .await
-            .expect("Could not deserialize Cargo.toml to text");
+    fn fetch_from_cargo_git(&self) -> DirEntry {
+        let (package_name, commit) = match self {
+            PackageKind::Github(p, c) => (p, c),
+            _ => unreachable!("cannot fetch for from github"),
+        };
 
-        let lines = cargo_toml.lines();
+        let mut cargo_dir_path = cargo_home_dir();
+        cargo_dir_path.push("git/checkouts");
 
-        let mut in_deps = false;
-        for line in lines {
-            // checks the package name = the searched for package
-            if line.starts_with("name =") && !in_deps {
-                let mut split_line = line.split("\"");
-                split_line.next();
+        let dir_value = std::fs::read_dir(&cargo_dir_path)
+            .expect(&format!("Could not read cargo git dir for {:?}", cargo_dir_path))
+            .collect::<Result<Vec<_>, _>>()
+            .expect(&format!("Coult not read subdirectories for: {:?}", cargo_dir_path))
+            .into_iter()
+            .find(|sub_dir| {
+                let file_name = sub_dir.file_name();
+                let p = file_name.to_str().unwrap();
+                p.starts_with(&format!("{package_name}-")) && p.replace(&format!("{package_name}-"), "").len() == 16
+            })
+            .expect(&format!("Could not find git package directory with name: {package_name}"));
 
-                let workspace_name = split_line.next().unwrap();
-                if workspace_name == target_path {
-                    return Ok(None);
-                }
-            }
+        let git_path = dir_value.path();
 
-            if line.starts_with("[") && in_deps {
-                break
-            }
+        // 16
 
-            if line.starts_with("[workspace.dependencies]") || line.starts_with("[dependencies]") {
-                in_deps = true;
-                continue
-            }
+        let project_crate = std::fs::read_dir(&git_path)
+            .expect(&format!("Could not read cargo git dir for {:?}", git_path))
+            .collect::<Result<Vec<_>, _>>()
+            .expect(&format!("Coult not read subdirectories for: {:?}", git_path))
+            .into_iter()
+            .find(|c| c.path().is_dir() && c.file_name().to_str().unwrap() == &format!("{}", commit[0..7].to_string()))
+            .expect(&format!("Could not find git package with name: {}", commit[0..7].to_string()));
 
-            if line.starts_with(target_path) {
-                if line.contains("path=") {
-                    let mut split_line = line.split("path=").last().unwrap().split("\"");
-                    split_line.next().unwrap();
-                    return Ok(Some(split_line.next().unwrap().to_string()));
-                } else if line.contains("path =") {
-                    let mut split_line = line.split("path =").last().unwrap().split("\"");
-                    split_line.next().unwrap();
-                    return Ok(Some(split_line.next().unwrap().to_string()));
-                }
-                break;
-            }
-        }
-
-        //panic!("Could not find path in Cargo.toml for package: {target_path}");
-
-        Ok(None)
+        project_crate
     }
 }
