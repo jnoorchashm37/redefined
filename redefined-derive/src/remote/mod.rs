@@ -187,7 +187,8 @@ impl Into<(GithubApiUrls, FileCache)> for RemoteType {
         let repo = repo_and_query
             .first()
             .expect(&format!("Could not parse repo for package {:?}", self))
-            .to_string();
+            .to_string()
+            .replace(".git", "");
 
         //panic!("Could not parse owner for package {:?}", value.package.root_url);
         //panic!("Could not parse owner for package {:?}", split_owner);
