@@ -68,7 +68,10 @@ fn line_conditions(line: &str, type_searched: &str) -> bool {
     // with generics
     let case1 = visibility && (line.contains(&format!("enum {}<", type_searched)) || line.contains(&format!("struct {}<", type_searched)));
 
-    case0 || case1
+    // with paran
+    let case2 = visibility && (line.contains(&format!("enum {}(", type_searched)) || line.contains(&format!("struct {}(", type_searched)));
+
+    case0 || case1 || case2
 }
 
 /// finds the index of the first character of the struct/enum
