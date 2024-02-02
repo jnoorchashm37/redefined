@@ -22,7 +22,13 @@ impl<'fut> GithubFetcher<'fut> {
         Self { futs }
     }
 
-    pub fn spawn_all(&self, urls: &'fut [String], web_client: &'fut reqwest::Client, type_searched: &'fut RemoteTypeMeta, file_cache_dir: &'fut str) {
+    pub fn spawn_all(
+        &self,
+        urls: &'fut [(String, String)],
+        web_client: &'fut reqwest::Client,
+        type_searched: &'fut RemoteTypeMeta,
+        file_cache_dir: &'fut str,
+    ) {
         let chunks = urls.chunks(20);
 
         chunks.into_iter().for_each(|urls| {
@@ -31,8 +37,13 @@ impl<'fut> GithubFetcher<'fut> {
         });
     }
 
-    async fn spawn_tasks(urls: &[String], web_client: &reqwest::Client, type_searched: &RemoteTypeMeta, file_cache_dir: &str) -> Vec<RemoteTypeText> {
-        join_all(urls.iter().map(|url| async move {
+    async fn spawn_tasks(
+        urls: &[(String, String)],
+        web_client: &reqwest::Client,
+        type_searched: &RemoteTypeMeta,
+        file_cache_dir: &str,
+    ) -> Vec<RemoteTypeText> {
+        join_all(urls.iter().map(|(url, file_cache_ext)| async move {
             let page_contents = web_client
                 .get(&*url)
                 .header("User-Agent", "request")
@@ -43,7 +54,7 @@ impl<'fut> GithubFetcher<'fut> {
                 .await
                 .expect(&format!("Could not deserialize github api content results as text for url {url}"));
 
-            let file_cache_full_path = format!("{file_cache_dir}/{}", type_searched.name);
+            let file_cache_full_path = format!("{file_cache_dir}/{}", file_cache_ext);
             write_to_file_cache(&file_cache_full_path, &page_contents);
 
             RemoteTypeText::parse_page(url.to_string(), page_contents, type_searched)

@@ -131,7 +131,7 @@ impl GithubApiUrls {
         }
     }
 
-    pub async fn get_all_urls(&self, web_client: &reqwest::Client) -> reqwest::Result<Vec<String>> {
+    pub async fn get_all_urls(&self, web_client: &reqwest::Client) -> reqwest::Result<Vec<(String, String)>> {
         let tree_text = web_client
             .get(&self.file_tree_url)
             .header("User-Agent", "request")
@@ -149,7 +149,7 @@ impl GithubApiUrls {
             .into_iter()
             .map(|path| path.path)
             .filter(|p| p.ends_with(".rs"))
-            .map(|path| format!("{}{path}?ref={}", self.base_contents_url, self.commit))
+            .map(|path| (format!("{}{path}?ref={}", self.base_contents_url, self.commit), path.replace("/", "_")))
             .collect();
 
         Ok(all_paths)

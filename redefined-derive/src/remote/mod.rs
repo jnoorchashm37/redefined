@@ -91,7 +91,7 @@ fn get_remote_type(parsed: &mut RemoteType, remote_type_meta: &RemoteTypeMeta) -
             panic!("Too Many Results From Github For Package: {:?}\nResults: {:?}", parsed, results);
         }
 
-        (results.first().unwrap().type_text.clone(), Some(github_api_urls.file_cache_path))
+        (results.first().unwrap().type_text.clone(), Some(format!("{}/{}", github_api_urls.file_cache_path, remote_type_meta.name)))
     }
 }
 
