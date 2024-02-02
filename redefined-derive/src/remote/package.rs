@@ -191,7 +191,8 @@ impl GithubApiUrls {
         }
 
         if results.len() == 0 {
-            panic!("No Results From File Cache For Package: {:?}", self);
+            //panic!("No Results From File Cache For Package: {:?}", self);
+            None
         } else if results.len() > 1 {
             panic!("Too Many Results From File Cache For Package: {:?}\nResults: {:?}", self, results);
         } else {
