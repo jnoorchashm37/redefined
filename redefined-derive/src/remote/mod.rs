@@ -61,7 +61,7 @@ fn get_remote_type(parsed: &mut RemoteType, remote_type_meta: &RemoteTypeMeta) -
 
     let file_cache_path = github_api_urls.file_cache_path.clone();
     if github_api_urls.check_file_exists() {
-        return (RemoteTypeText::parse_file_cache(&github_api_urls.file_cache_path).type_text, None)
+        return (RemoteTypeText::parse_file_cache(&github_api_urls.cached_file).type_text, None)
     }
     if let Some(result) = github_api_urls.fetch_from_file_cache(remote_type_meta) {
         (result.type_text, Some(github_api_urls.cached_file))
