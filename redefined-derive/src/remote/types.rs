@@ -20,7 +20,7 @@ pub struct CratesIoCallRequest {
 
 #[derive(Deserialize, Debug)]
 pub struct CratesIoCall {
-    pub homepage: String,
+    pub repository: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]

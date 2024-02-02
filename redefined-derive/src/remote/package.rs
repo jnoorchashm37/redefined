@@ -76,7 +76,7 @@ impl Package {
         let crates_io: CratesIoCallRequest =
             serde_json::from_str(&crates_io_text).expect(&format!("Could not deserialize crates-io kind for url: {}\ntext: {}", url, crates_io_text));
 
-        Ok(crates_io.crate_map.homepage)
+        Ok(crates_io.crate_map.repository)
     }
 }
 
