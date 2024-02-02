@@ -212,7 +212,7 @@ impl Into<(GithubApiUrls, FileCache)> for RemoteType {
 
         let file_cache = FileCache { cached_file, file_cache_path, root_file_cache_path };
 
-        panic!("GITHUB: {:?}\n\nFILE CACHE: {:?}", github_api_urls, file_cache);
+        //panic!("GITHUB: {:?}\n\nFILE CACHE: {:?}", github_api_urls, file_cache);
 
         (github_api_urls, file_cache)
     }
