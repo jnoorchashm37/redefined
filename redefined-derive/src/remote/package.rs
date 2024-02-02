@@ -6,9 +6,10 @@ use crate::remote::types::{workspace_dir, GithubApiFileTree};
 /// parsing of the package from crates-io OR github
 #[derive(Debug, Clone)]
 pub struct Package {
-    pub root_url: String,
-    pub version:  String,
-    pub kind:     PackageKind,
+    pub package_name: String,
+    pub root_url:     String,
+    pub version:      String,
+    pub kind:         PackageKind,
 }
 
 impl Package {
@@ -44,6 +45,7 @@ impl Package {
                     };
 
                     return Ok(Package {
+                        package_name: package.clone(),
                         root_url: url
                             .expect(&format!("could not parse 'source' for package '{package}' in cargo lock"))
                             .trim_matches('\"')
@@ -105,11 +107,12 @@ impl PackageKind {
 /// retrieves github urls from crates-io
 #[derive(Debug, Clone)]
 pub struct GithubApiUrls {
-    pub root_url:          String,
-    pub file_tree_url:     String,
-    pub base_contents_url: String,
-    pub commit:            String,
-    pub is_crates_io:      bool,
+    pub root_url:                String,
+    pub file_tree_url:           String,
+    pub base_contents_url:       String,
+    pub commit:                  String,
+    // check if the package is sub-crate
+    pub check_toml_for_sub_path: bool,
 }
 
 impl GithubApiUrls {
@@ -137,5 +140,46 @@ impl GithubApiUrls {
             .collect();
 
         Ok(all_paths)
+    }
+
+    /// gets the sub-crate path from the cargo toml
+    pub async fn get_file_subpath(&self, web_client: &reqwest::Client, target_path: &str) -> reqwest::Result<String> {
+        let cargo_toml = web_client
+            .get(&format!("{}Cargo.toml", self.base_contents_url))
+            .header("User-Agent", "request")
+            .send()
+            .await?
+            .text()
+            .await
+            .expect("Could not deserialize Cargo.toml to text");
+
+        let lines = cargo_toml.lines();
+
+        let mut path = None;
+        let mut in_deps = false;
+        for line in lines {
+            if line.starts_with("[") && in_deps {
+                break
+            }
+
+            if line.starts_with("[workspace.dependencies]") || line.starts_with("[dependencies]") {
+                in_deps = true;
+                continue
+            }
+
+            if line.starts_with(target_path) {
+                if line.contains("path=") {
+                    let mut split_line = line.split("path=").last().unwrap().split("\"");
+                    split_line.next().unwrap();
+                    path = Some(split_line.next().unwrap().to_string());
+                } else if line.contains("path =") {
+                    let mut split_line = line.split("path =").last().unwrap().split("\"");
+                    split_line.next().unwrap();
+                    path = Some(split_line.next().unwrap().to_string());
+                }
+            }
+        }
+
+        Ok(path.expect(&format!("Could not find path in Cargo.toml for package: {target_path}")))
     }
 }

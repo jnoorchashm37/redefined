@@ -85,7 +85,18 @@ impl RemoteType {
         if file_cache.check_file_exists() {
             return (ParsedRemoteType::parse_from_file_cache(&file_cache.cached_file).type_text, None)
         }
-        if let Some(result) = file_cache.fetch_from_file_cache(&self.name.to_string()) {
+
+        let sub_path = if github_api_urls.check_toml_for_sub_path {
+            let sub_path = rt
+                .block_on(github_api_urls.get_file_subpath(&web_client, &self.package.package_name))
+                .expect(&format!("Could not get subpath from Cargo.toml for package: {:?}", github_api_urls));
+
+            Some(sub_path)
+        } else {
+            None
+        };
+
+        if let Some(result) = file_cache.fetch_from_file_cache(&self.name.to_string(), &sub_path) {
             (result.type_text, Some(file_cache.cached_file))
         } else {
             let all_urls = rt
@@ -94,7 +105,7 @@ impl RemoteType {
 
             let mut fetcher = GithubFetcher::new();
 
-            fetcher.spawn_all(&all_urls, &web_client, &target_name, &file_cache);
+            fetcher.spawn_all(&all_urls, &web_client, &target_name, &sub_path, &file_cache);
 
             let fut = async {
                 let mut results = Vec::new();
@@ -208,7 +219,8 @@ impl Into<(GithubApiUrls, FileCache)> for RemoteType {
         let file_cache_path = format!("{root_file_cache_path}/{owner}_{repo}_{commit}/files");
         let cached_file = format!("{root_file_cache_path}/{owner}_{repo}_{commit}/cached/{}", self.name);
 
-        let github_api_urls = GithubApiUrls { root_url: self.package.root_url, file_tree_url, base_contents_url, commit, is_crates_io };
+        let github_api_urls =
+            GithubApiUrls { root_url: self.package.root_url, file_tree_url, base_contents_url, commit, check_toml_for_sub_path: self.name != repo };
 
         let file_cache = FileCache { cached_file, file_cache_path, root_file_cache_path };
 

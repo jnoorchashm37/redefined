@@ -42,7 +42,7 @@ impl FileCache {
     }
 
     /// attemos the fetch the type from the cached files of the repo
-    pub fn fetch_from_file_cache(&self, type_searched: &str) -> Option<ParsedRemoteType> {
+    pub fn fetch_from_file_cache(&self, type_searched: &str, sub_path: &Option<String>) -> Option<ParsedRemoteType> {
         let redefined_file_cache = std::path::Path::new(&self.file_cache_path);
         if !redefined_file_cache.exists() || !redefined_file_cache.is_dir() {
             std::fs::create_dir_all(&redefined_file_cache).expect(&format!("Could not create file cache dir for {}", self.file_cache_path));
@@ -56,11 +56,18 @@ impl FileCache {
         if dir_values.is_empty() {
             return None
         }
+
+        let sp = sub_path.clone().map(|s| s.replace("-", "_"));
         for entry in dir_values {
             let entry = entry.expect(&format!("Could not get file cache dir entry for {}", self.file_cache_path));
             let path = entry.path();
 
             if path.is_file() {
+                if let Some(ref p) = sp {
+                    if !path.as_path().to_str().unwrap().contains(p) {
+                        continue;
+                    }
+                }
                 let mut file =
                     std::fs::File::open(&path).expect(&format!("Could not open file {:?} from file cache for {}", &path, self.file_cache_path));
                 let mut file_contents = String::new();

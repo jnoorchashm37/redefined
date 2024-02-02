@@ -18,12 +18,19 @@ impl<'a> GithubFetcher<'a> {
         Self { futs }
     }
 
-    pub fn spawn_all(&self, urls: &'a [(String, String)], web_client: &'a reqwest::Client, type_searched: &'a str, file_cache: &'a FileCache) {
+    pub fn spawn_all(
+        &self,
+        urls: &'a [(String, String)],
+        web_client: &'a reqwest::Client,
+        type_searched: &'a str,
+        sub_path: &'a Option<String>,
+        file_cache: &'a FileCache,
+    ) {
         let chunks = urls.chunks(20);
 
         chunks.into_iter().for_each(|urls| {
             self.futs
-                .push(Box::pin(Self::spawn_tasks(urls, web_client, type_searched, file_cache)))
+                .push(Box::pin(Self::spawn_tasks(urls, web_client, type_searched, sub_path, file_cache)))
         });
     }
 
@@ -31,6 +38,7 @@ impl<'a> GithubFetcher<'a> {
         urls: &[(String, String)],
         web_client: &reqwest::Client,
         type_searched: &str,
+        sub_path: &'a Option<String>,
         file_cache: &FileCache,
     ) -> Vec<ParsedRemoteType> {
         join_all(urls.iter().map(|(url, file_cache_ext)| async move {
@@ -46,6 +54,14 @@ impl<'a> GithubFetcher<'a> {
 
             let file_cache_full_path = format!("{}/{}", file_cache.file_cache_path, file_cache_ext);
             write_to_file_cache(&file_cache_full_path, &page_contents);
+
+            if let Some(sp) = sub_path {
+                if url.contains(&*sp) {
+                    return ParsedRemoteType::parse_from_page(url.to_string(), page_contents, type_searched)
+                } else {
+                    return None
+                }
+            }
 
             ParsedRemoteType::parse_from_page(url.to_string(), page_contents, type_searched)
         }))
