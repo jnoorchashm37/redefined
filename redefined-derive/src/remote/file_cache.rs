@@ -63,6 +63,7 @@ impl FileCache {
             let path = entry.path();
 
             if path.is_file() {
+                //panic!("SP: {:?}", sp);
                 if let Some(ref p) = sp {
                     if !path.as_path().to_str().unwrap().contains(p) {
                         continue;

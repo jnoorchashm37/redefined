@@ -143,7 +143,7 @@ impl GithubApiUrls {
     }
 
     /// gets the sub-crate path from the cargo toml
-    pub async fn get_file_subpath(&self, web_client: &reqwest::Client, target_path: &str) -> reqwest::Result<String> {
+    pub async fn get_file_subpath(&self, web_client: &reqwest::Client, target_path: &str) -> reqwest::Result<Option<String>> {
         let cargo_toml = web_client
             .get(&format!("{}Cargo.toml", self.base_contents_url))
             .header("User-Agent", "request")
@@ -155,9 +155,19 @@ impl GithubApiUrls {
 
         let lines = cargo_toml.lines();
 
-        let mut path = None;
         let mut in_deps = false;
         for line in lines {
+            // checks the package name = the searched for package
+            if line.starts_with("name =") && !in_deps {
+                let mut split_line = line.split("\"");
+                split_line.next();
+
+                let workspace_name = split_line.next().unwrap();
+                if workspace_name == target_path {
+                    return Ok(None);
+                }
+            }
+
             if line.starts_with("[") && in_deps {
                 break
             }
@@ -171,15 +181,16 @@ impl GithubApiUrls {
                 if line.contains("path=") {
                     let mut split_line = line.split("path=").last().unwrap().split("\"");
                     split_line.next().unwrap();
-                    path = Some(split_line.next().unwrap().to_string());
+                    return Ok(Some(split_line.next().unwrap().to_string()));
                 } else if line.contains("path =") {
                     let mut split_line = line.split("path =").last().unwrap().split("\"");
                     split_line.next().unwrap();
-                    path = Some(split_line.next().unwrap().to_string());
+                    return Ok(Some(split_line.next().unwrap().to_string()));
                 }
+                break;
             }
         }
 
-        Ok(path.expect(&format!("Could not find path in Cargo.toml for package: {target_path}")))
+        panic!("Could not find path in Cargo.toml for package: {target_path}");
     }
 }
