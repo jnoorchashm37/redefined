@@ -22,7 +22,6 @@ pub struct RedefinedContainer<'a> {
     where_clause:           Option<TokenStream>,
     to_source_tokens:       TokenStream,
     from_source_tokens:     TokenStream,
-    self_impl:              TokenStream,
 }
 
 impl<'a> RedefinedContainer<'a> {
@@ -72,8 +71,6 @@ impl<'a> RedefinedContainer<'a> {
             };
         }
 
-        let self_impl = make_self_impl(&outer.target_type, input_generics);
-
         Ok(Self {
             source_type,
             target_type: outer.target_type,
@@ -83,7 +80,6 @@ impl<'a> RedefinedContainer<'a> {
             where_clause,
             to_source_tokens,
             from_source_tokens,
-            self_impl,
         })
     }
 
@@ -97,7 +93,6 @@ impl<'a> RedefinedContainer<'a> {
             where_clause,
             to_source_tokens,
             from_source_tokens,
-            self_impl,
         } = self;
 
         quote! {
@@ -190,23 +185,4 @@ pub fn build_generics_with_where_clause(ty_generics: Generics) -> syn::Result<(G
     target_generics.params.extend(source_generics.clone());
 
     Ok((target_generics, source_generics, where_clause))
-}
-
-fn make_self_impl(target_type: &Ident, generics: &Generics) -> TokenStream {
-    let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
-
-    quote! {
-        impl #impl_generics RedefinedConvert<#target_type #type_generics> for #target_type #type_generics
-        #where_clause
-        {
-            fn from_source(src: #target_type #type_generics) -> Self {
-                src
-            }
-
-            fn to_source(self) -> #target_type #type_generics {
-                self
-            }
-        }
-
-    }
 }
