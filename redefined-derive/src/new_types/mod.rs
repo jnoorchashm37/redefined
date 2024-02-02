@@ -1,12 +1,12 @@
 pub mod r#enum;
 pub mod r#struct;
 
-use proc_macro2::{Ident, TokenStream};
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use syn::{Data, DeriveInput};
+use syn::{parse::Parse, Attribute, Data, DeriveInput};
 
 use self::{r#enum::parse_new_enum, r#struct::parse_new_struct};
-use crate::outer::OuterContainer;
+use crate::{attributes::ContainerAttributes, outer::OuterContainer};
 
 pub fn parse_type_without_source(outer: OuterContainer, input: &DeriveInput) -> syn::Result<TokenStream> {
     let input_data = &input.data;
@@ -20,4 +20,26 @@ pub fn parse_type_without_source(outer: OuterContainer, input: &DeriveInput) -> 
     }?;
 
     Ok(quote!( #new_type_tokens ))
+}
+
+pub fn parse_attributes(attrs: &[Attribute], span: Span) -> syn::Result<(Vec<Ident>, Vec<Attribute>)> {
+    let mut derive_attrs = vec![Ident::new("Redefined", span.clone())];
+    let mut container_attrs = Vec::new();
+
+    for attr in attrs {
+        if attr.path().is_ident("redefined_attr") {
+            derive_attrs.extend(
+                attr.parse_args_with(ContainerAttributes::parse)?
+                    .0
+                    .into_iter()
+                    .filter_map(|a| a.list_idents)
+                    .flatten()
+                    .collect::<Vec<_>>(),
+            );
+        } else {
+            container_attrs.push(attr.clone())
+        }
+    }
+
+    Ok((derive_attrs, container_attrs))
 }

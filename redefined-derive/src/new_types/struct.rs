@@ -1,8 +1,15 @@
+use std::collections::VecDeque;
+
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{self, parse::Parse, spanned::Spanned, Attribute, DataStruct, Field, Fields, Generics, Ident, Type, Visibility};
 
-use crate::attributes::{symbol::REDEFINED_FIELD, ContainerAttributes};
+use super::parse_attributes;
+use crate::attributes::{
+    primitives::Primitive,
+    symbol::{USE_DEFAULT_FIELD, USE_FIELD, USE_SAME_FIELD_VALUE},
+    ContainerAttributes,
+};
 
 pub fn parse_new_struct(
     data_struct: &DataStruct,
@@ -18,24 +25,25 @@ pub fn parse_new_struct(
         _ => return Err(syn::Error::new_spanned(&data_struct.fields, "Expected a struct with named/unnamed fields")),
     };
 
+    let (derive_attrs, container_attrs) = parse_attributes(attributes, struct_name.span())?;
+
     let struct_fields = fields
         .iter()
         .map(|field| parse_field(field))
         .collect::<syn::Result<Vec<_>>>()?;
 
-    // semi_token
     let tokens = if let Some(semi_token) = data_struct.semi_token {
         quote! {
-            #[Derive(Redefined)]
+            #[derive(#(#derive_attrs),*)]
             #[redefined(#struct_name)]
-            #(#attributes)*
+            #(#container_attrs)*
             #visibility struct #new_struct_name #generics (#(#struct_fields),*)#semi_token
         }
     } else {
         quote! {
-            #[derive(Redefined)]
+            #[derive(#(#derive_attrs),*)]
             #[redefined(#struct_name)]
-            #(#attributes)*
+            #(#container_attrs)*
             #visibility struct #new_struct_name #generics {
                 #(#struct_fields),*
             }
@@ -62,21 +70,18 @@ pub fn parse_field(field: &Field) -> syn::Result<TokenStream> {
         }
     }
 
-    if let Some(attr) = field_attrs
-        .iter()
-        .find(|s| s.symbol == REDEFINED_FIELD)
-        .cloned()
-    {
-        let attr_type = attr.list_idents.unwrap();
-        let new_type_name = if attr_type.is_empty() {
-            None
-        } else if attr_type.len() == 1 {
-            Some(attr_type[0].clone())
-        } else {
-            panic!("#[redefined(field(...)) must either have 0 (default redefined type) or 1 (custom redefined type) in 'field(...)'")
-        };
+    if let Some(attr) = field_attrs.iter().find(|s| s.symbol == USE_FIELD).cloned() {
+        let mut attr_types = attr.list_tuple_idents.unwrap().into();
 
-        ty = parse_type_to_redefined(&ty, new_type_name);
+        /*
+        panic!("#[redefined(field(...)) must either have 0 (default redefined type) or 1 (custom redefined type) in 'field(...)'")
+         */
+
+        ty = parse_type_to_redefined(&ty, &mut attr_types);
+
+        if !attr_types.is_empty() {
+            panic!("#[redefined(field(...))' must have the same length as the number of types - remaining: {:?}", attr_types)
+        }
     }
 
     let tokens = quote! {
@@ -87,7 +92,7 @@ pub fn parse_field(field: &Field) -> syn::Result<TokenStream> {
     Ok(tokens)
 }
 
-pub fn parse_type_to_redefined(src_type: &Type, new_type_name: Option<Ident>) -> Type {
+pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &mut VecDeque<(Ident, Ident)>) -> Type {
     /*
     match &src_type {
         Type::BareFn(_) => unimplemented!(),
@@ -97,7 +102,6 @@ pub fn parse_type_to_redefined(src_type: &Type, new_type_name: Option<Ident>) ->
         Type::Macro(_) => unimplemented!(),
         Type::Never(_) => unimplemented!(),
         Type::Paren(_) => unimplemented!(),
-        Type::Path(_) => unimplemented!(),
         Type::Ptr(_) => unimplemented!(),
 
         Type::TraitObject(t) => unimplemented!(),
@@ -109,26 +113,72 @@ pub fn parse_type_to_redefined(src_type: &Type, new_type_name: Option<Ident>) ->
     match src_type {
         Type::Array(a) => {
             let mut array = a.clone();
-            let new_type = parse_type_to_redefined(&a.elem, new_type_name);
+            let new_type = parse_type_to_redefined(&a.elem, new_type_names);
             array.elem = Box::new(new_type);
             Type::Array(array)
         }
         Type::Reference(r) => {
             let mut refer = r.clone();
-            let new_type = parse_type_to_redefined(&r.elem, new_type_name);
+            let new_type = parse_type_to_redefined(&r.elem, new_type_names);
             refer.elem = Box::new(new_type);
             Type::Reference(refer)
         }
         Type::Slice(s) => {
             let mut slice = s.clone();
-            let new_type = parse_type_to_redefined(&s.elem, new_type_name);
+            let new_type = parse_type_to_redefined(&s.elem, new_type_names);
             slice.elem = Box::new(new_type);
             Type::Slice(slice)
         }
         Type::Path(p) => {
             let mut path = p.clone();
-            let seg = path.path.segments.first_mut();
-            seg.unwrap().ident = new_type_name.unwrap_or(Ident::new(&format!("{}Redefined", seg.as_ref().unwrap().ident), p.span()));
+            //panic!("TOOOO\n {:?}\n", p.path.get_ident());
+            path.path.segments.iter_mut().for_each(|seg| {
+                //panic!("TOOOO\n {}\n{}", seg.ident, Primitive::is_primitive(&seg.ident));
+                //panic!("TOOOO\n {}\n{:?}\n{}", seg.ident, new_type_names.pop_front(),
+                // new_type_names.len(), seg.arguments);
+
+                if let Some((source, target)) = new_type_names
+                    .clone()
+                    .iter()
+                    .find(|(source, _)| source == &seg.ident)
+                {
+                    if &seg.ident == source {
+                        if target == USE_DEFAULT_FIELD {
+                            //panic!("TOOOO\n {:?}\n", seg.ident);
+                            seg.ident = Ident::new(&format!("{}Redefined", seg.ident), seg.span())
+                        } else if target == USE_SAME_FIELD_VALUE {
+                            ()
+                        } else {
+                            seg.ident = target.clone()
+                        }
+                    }
+                    new_type_names.retain(|(s, t)| s != source && t != target);
+                } else {
+                    match &mut seg.arguments {
+                        syn::PathArguments::None => {
+                            //panic!("TOOOO\n {}\n{}", seg.ident, Primitive::is_primitive(&seg.ident));
+                            if let Some((source, target)) = new_type_names.pop_front() {
+                                if seg.ident == source {
+                                    if target == USE_DEFAULT_FIELD {
+                                        seg.ident = Ident::new(&format!("{}Redefined", seg.ident), seg.span())
+                                    } else {
+                                        seg.ident = target
+                                    }
+                                }
+                            }
+                        }
+
+                        syn::PathArguments::AngleBracketed(a) => a.args.iter_mut().for_each(|arg| match arg {
+                            syn::GenericArgument::Type(t) => *t = parse_type_to_redefined(&t, new_type_names),
+                            _ => (),
+                        }),
+                        syn::PathArguments::Parenthesized(p) => p
+                            .inputs
+                            .iter_mut()
+                            .for_each(|t| *t = parse_type_to_redefined(&t, new_type_names)),
+                    }
+                }
+            });
 
             Type::Path(path)
         }

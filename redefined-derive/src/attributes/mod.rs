@@ -1,3 +1,4 @@
+pub mod primitives;
 pub mod symbol;
 pub mod type_attr;
 

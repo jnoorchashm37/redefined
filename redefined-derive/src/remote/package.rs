@@ -1,6 +1,9 @@
-use std::io::BufRead;
+use std::io::{BufRead, Read};
 
-use super::types::{CratesIoCallRequest, RemoteType};
+use super::{
+    fetch::RemoteTypeText,
+    types::{CratesIoCallRequest, RemoteType, RemoteTypeMeta},
+};
 use crate::remote::types::{workspace_dir, GithubApiFileTree};
 
 #[derive(Debug, Clone)]
@@ -107,15 +110,17 @@ pub struct GithubApiUrls {
     pub file_tree_url:        String,
     pub base_contents_url:    String,
     pub commit:               String,
+    pub cached_file:          String,
     pub file_cache_path:      String,
     pub root_file_cache_path: String,
 }
 
 impl GithubApiUrls {
-    pub fn check_file_cache(&self) -> bool {
+    /// whether or not the cached result exists
+    pub fn check_file_exists(&self) -> bool {
         let redefined_file_cache = std::path::Path::new(&self.root_file_cache_path);
         if redefined_file_cache.exists() && redefined_file_cache.is_dir() {
-            let file_path = std::path::Path::new(&self.file_cache_path);
+            let file_path = std::path::Path::new(&self.cached_file);
             if file_path.exists() {
                 return true
             }
@@ -148,6 +153,50 @@ impl GithubApiUrls {
             .collect();
 
         Ok(all_paths)
+    }
+
+    pub fn fetch_from_file_cache(&self, type_searched: &RemoteTypeMeta) -> Option<(RemoteTypeText, String)> {
+        let redefined_file_cache = std::path::Path::new(&self.file_cache_path);
+        if !redefined_file_cache.exists() || !redefined_file_cache.is_dir() {
+            std::fs::create_dir_all(&redefined_file_cache).expect(&format!("Could not create file cache dir for {}", self.file_cache_path));
+            return None
+        }
+
+        let mut results = Vec::new();
+        let dir_values = std::fs::read_dir(redefined_file_cache)
+            .expect(&format!("Could not read file cache dir for {}", self.file_cache_path))
+            .collect::<Vec<_>>();
+        if dir_values.is_empty() {
+            return None
+        }
+        for entry in dir_values {
+            let entry = entry.expect(&format!("Could not get file cache dir entry for {}", self.file_cache_path));
+            let path = entry.path();
+
+            // Check if the entry is a file
+            if path.is_file() {
+                // Open the file and read its contents
+                let mut file =
+                    std::fs::File::open(&path).expect(&format!("Could not open file {:?} from file cache for {}", &path, self.file_cache_path));
+                let mut file_contents = String::new();
+                file.read_to_string(&mut file_contents)
+                    .expect(&format!("Could not read file {:?} to string for {}", path, self.file_cache_path));
+
+                // Append the file contents to the main string
+                let p = path.as_path().to_str().unwrap().to_string();
+                if let Some(r) = RemoteTypeText::parse_page(p.clone(), file_contents, type_searched) {
+                    results.push((r, p))
+                }
+            }
+        }
+
+        if results.len() == 0 {
+            panic!("No Results From File Cache For Package: {:?}", self);
+        } else if results.len() > 1 {
+            panic!("Too Many Results From File Cache For Package: {:?}\nResults: {:?}", self, results);
+        } else {
+            Some(results.first().unwrap().clone())
+        }
     }
 }
 
@@ -204,8 +253,9 @@ impl From<RemoteType> for GithubApiUrls {
         let path = root_path.to_str().unwrap();
 
         let root_file_cache_path = format!("{path}/target/redefined_file_cache");
-        let file_cache_path = format!("{root_file_cache_path}/{}_{owner}_{repo}_{commit}", value.name);
+        let file_cache_path = format!("{root_file_cache_path}/{owner}_{repo}_{commit}/files");
+        let cached_file = format!("{root_file_cache_path}/{owner}_{repo}_{commit}/cached/{}", value.name);
 
-        Self { root_url: value.package.root_url, file_tree_url, base_contents_url, commit, file_cache_path, root_file_cache_path }
+        Self { root_url: value.package.root_url, file_tree_url, base_contents_url, commit, cached_file, file_cache_path, root_file_cache_path }
     }
 }

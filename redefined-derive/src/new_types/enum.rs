@@ -3,7 +3,7 @@ use quote::{quote, ToTokens};
 use syn::{self, parse::Parse, spanned::Spanned, Attribute, DataEnum, DataStruct, Field, Fields, Generics, Ident, Type, Variant, Visibility};
 
 use crate::{
-    attributes::{symbol::REDEFINED_FIELD, ContainerAttributes},
+    attributes::{symbol::USE_FIELD, ContainerAttributes},
     new_types::r#struct::parse_field,
 };
 

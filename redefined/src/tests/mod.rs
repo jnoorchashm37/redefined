@@ -1,6 +1,6 @@
 mod derive;
-//#[cfg(feature = "remote")]
-//mod remote;
+#[cfg(feature = "remote")]
+mod remote;
 
 #[macro_export]
 macro_rules! struct_test {

@@ -6,7 +6,10 @@ use std::{
 
 use futures::{future::join_all, stream::FuturesUnordered, Future, Stream, StreamExt};
 
-use super::types::{GithubApiFileTree, RemoteTypeMeta, StructOrEnum};
+use super::{
+    types::{GithubApiFileTree, RemoteTypeMeta, StructOrEnum},
+    write_to_file_cache,
+};
 
 pub struct GithubFetcher<'fut> {
     pub futs: FuturesUnordered<Pin<Box<dyn Future<Output = Vec<RemoteTypeText>> + 'fut>>>,
@@ -19,16 +22,16 @@ impl<'fut> GithubFetcher<'fut> {
         Self { futs }
     }
 
-    pub fn spawn_all(&self, urls: &'fut [String], web_client: &'fut reqwest::Client, type_searched: &'fut RemoteTypeMeta) {
+    pub fn spawn_all(&self, urls: &'fut [String], web_client: &'fut reqwest::Client, type_searched: &'fut RemoteTypeMeta, file_cache_dir: &'fut str) {
         let chunks = urls.chunks(20);
 
         chunks.into_iter().for_each(|urls| {
             self.futs
-                .push(Box::pin(Self::spawn_tasks(urls, web_client, type_searched)))
+                .push(Box::pin(Self::spawn_tasks(urls, web_client, type_searched, file_cache_dir)))
         });
     }
 
-    async fn spawn_tasks(urls: &[String], web_client: &reqwest::Client, type_searched: &RemoteTypeMeta) -> Vec<RemoteTypeText> {
+    async fn spawn_tasks(urls: &[String], web_client: &reqwest::Client, type_searched: &RemoteTypeMeta, file_cache_dir: &str) -> Vec<RemoteTypeText> {
         join_all(urls.iter().map(|url| async move {
             let page_contents = web_client
                 .get(&*url)
@@ -39,6 +42,9 @@ impl<'fut> GithubFetcher<'fut> {
                 .text()
                 .await
                 .expect(&format!("Could not deserialize github api content results as text for url {url}"));
+
+            let file_cache_full_path = format!("{file_cache_dir}/{}", type_searched.name);
+            write_to_file_cache(&file_cache_full_path, &page_contents);
 
             RemoteTypeText::parse_page(url.to_string(), page_contents, type_searched)
         }))

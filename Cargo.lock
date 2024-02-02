@@ -1127,7 +1127,7 @@ version = "0.1.0"
 [[package]]
 name = "redefined-test-types"
 version = "0.1.0"
-source = "git+https://github.com/0xlagrange/redefined?branch=remote#f28be05b4c22ca7aa1df85b1ddc9e4eddbb6acfe"
+source = "git+https://github.com/0xlagrange/redefined?branch=remote#3d26fd8e332fda2389effe9931babddcdd5579c5"
 
 [[package]]
 name = "redox_syscall"

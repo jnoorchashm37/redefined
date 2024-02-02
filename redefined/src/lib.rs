@@ -44,12 +44,16 @@ impl<T, F> RedefinedConvert<Vec<T>> for Vec<F>
 where
     F: RedefinedConvert<T>,
 {
-    fn from_source(item: Vec<T>) -> Self {
-        item.into_iter().map(|val| F::from_source(val)).collect()
+    fn from_source(item: Vec<T>) -> Vec<F> {
+        item.into_iter()
+            .map(|val| F::from_source(val))
+            .collect::<Vec<F>>()
     }
 
     fn to_source(self) -> Vec<T> {
-        self.into_iter().map(|val| val.to_source()).collect()
+        self.into_iter()
+            .map(|val| val.to_source())
+            .collect::<Vec<T>>()
     }
 }
 

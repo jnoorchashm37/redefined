@@ -1,15 +1,16 @@
 use std::fmt::Debug;
 
 use quote::ToTokens;
-use syn::{self, parenthesized, parse::Parse, parse_quote, Expr, Ident, LitStr, Token};
+use syn::{self, parenthesized, parse::Parse, parse_quote, Expr, Ident, LitStr, Token, TypeTuple};
 
 use super::symbol::*;
 
 #[derive(Clone)]
 pub struct TypeAttribute {
-    pub symbol:      Symbol,
-    pub nv_tokens:   Option<Expr>,
-    pub list_idents: Option<Vec<Ident>>,
+    pub symbol:            Symbol,
+    pub nv_tokens:         Option<Expr>,
+    pub list_idents:       Option<Vec<Ident>>,
+    pub list_tuple_idents: Option<Vec<(Ident, Ident)>>,
 }
 
 impl Debug for TypeAttribute {
@@ -33,25 +34,53 @@ impl Parse for TypeAttribute {
         let symbol: Symbol = input.parse()?;
 
         let this = match symbol.meta {
-            SymbolMeta::Path => Self { symbol, nv_tokens: None, list_idents: None },
+            SymbolMeta::Path => Self { symbol, nv_tokens: None, list_idents: None, list_tuple_idents: None },
             SymbolMeta::List => {
                 //let t = input.parse::<Ident>()?;
                 // panic!("NONONO, {}", t);
                 let content;
                 parenthesized!(content in input);
 
-                let idents = content
-                    .parse_terminated(Ident::parse, Token![,])?
-                    .into_iter()
-                    .collect();
-
-                Self { symbol, nv_tokens: None, list_idents: Some(idents) }
+                if content.peek(syn::Ident) {
+                    let idents = content
+                        .parse_terminated(Ident::parse, Token![,])?
+                        .into_iter()
+                        .collect();
+                    Self { symbol, nv_tokens: None, list_idents: Some(idents), list_tuple_idents: None }
+                } else {
+                    let idents = content
+                        .parse_terminated(TypeTuple::parse, Token![,])?
+                        .into_iter()
+                        .map(|mut tupl| {
+                            let ident1 = match tupl
+                                .elems
+                                .pop()
+                                .expect("Tuple argments must have 2")
+                                .into_value()
+                            {
+                                syn::Type::Path(p) => p.path.get_ident().unwrap().clone(),
+                                _ => unreachable!("Tuple Ident 2 must be a path"),
+                            };
+                            let ident0 = match tupl
+                                .elems
+                                .pop()
+                                .expect("Tuple argments must have 2")
+                                .into_value()
+                            {
+                                syn::Type::Path(p) => p.path.get_ident().unwrap().clone(),
+                                _ => unreachable!("Tuple Ident 2 must be a path"),
+                            };
+                            (ident0, ident1)
+                        })
+                        .collect::<Vec<_>>();
+                    Self { symbol, nv_tokens: None, list_idents: None, list_tuple_idents: Some(idents) }
+                }
             }
             SymbolMeta::NameValue => {
                 input.parse::<Token![=]>()?;
                 let nv = input.parse::<Expr>()?;
                 let lit_nv: LitStr = parse_quote!(#nv);
-                Self { symbol, nv_tokens: Some(lit_nv.parse()?), list_idents: None }
+                Self { symbol, nv_tokens: Some(lit_nv.parse()?), list_idents: None, list_tuple_idents: None }
             }
         };
 

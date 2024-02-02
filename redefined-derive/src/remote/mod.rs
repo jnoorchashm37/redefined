@@ -59,15 +59,20 @@ fn get_remote_type(parsed: &mut RemoteType, remote_type_meta: &RemoteTypeMeta) -
 
     let github_api_urls: GithubApiUrls = parsed.clone().into();
 
-    if github_api_urls.check_file_cache() {
-        (RemoteTypeText::parse_file_cache(&github_api_urls.file_cache_path).type_text, None)
+    let file_cache_path = github_api_urls.file_cache_path.clone();
+    if github_api_urls.check_file_exists() {
+        return (RemoteTypeText::parse_file_cache(&github_api_urls.file_cache_path).type_text, None)
+    }
+    if let Some((result, path)) = github_api_urls.fetch_from_file_cache(remote_type_meta) {
+        (result.type_text, Some(path))
     } else {
         let all_urls = rt
             .block_on(github_api_urls.get_all_urls(&web_client))
             .expect(&format!("Could not get url github urls for package: {:?}", parsed));
 
         let mut fetcher = GithubFetcher::new();
-        fetcher.spawn_all(&all_urls, &web_client, &remote_type_meta);
+
+        fetcher.spawn_all(&all_urls, &web_client, &remote_type_meta, &file_cache_path);
 
         let fut = async {
             let mut results = Vec::new();
@@ -81,16 +86,16 @@ fn get_remote_type(parsed: &mut RemoteType, remote_type_meta: &RemoteTypeMeta) -
         let results = rt.block_on(fut);
 
         if results.len() == 0 {
-            panic!("No Results For Package: {:?}", parsed);
+            panic!("No Results From Github For Package: {:?}", parsed);
         } else if results.len() > 1 {
-            panic!("Too Many Results For Package: {:?}\nResults: {:?}", parsed, results);
+            panic!("Too Many Results From Github For Package: {:?}\nResults: {:?}", parsed, results);
         }
 
         (results.first().unwrap().type_text.clone(), Some(github_api_urls.file_cache_path))
     }
 }
 
-fn write_to_file_cache(path: &str, text: &str) {
+pub fn write_to_file_cache(path: &str, text: &str) {
     let mut file = std::fs::File::create(path).expect(&format!("Failed to open file in file cache: {}", path));
 
     file.write_all(text.as_bytes())
