@@ -6,7 +6,6 @@ use syn::{self, parse::Parse, spanned::Spanned, Attribute, DataStruct, Field, Fi
 
 use super::parse_attributes;
 use crate::attributes::{
-    primitives::Primitive,
     symbol::{USE_DEFAULT_FIELD, USE_FIELD, USE_SAME_FIELD_VALUE},
     ContainerAttributes,
 };

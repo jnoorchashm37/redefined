@@ -88,12 +88,6 @@ mod derive_transmute_no_source {
         pub vals: Vec<Y>,
     }
 
-    impl<X, Y> GenericTypeStructA<X, Y> {
-        pub fn new(d: X, vals: Vec<Y>) -> Self {
-            Self { p: Default::default(), d, vals }
-        }
-    }
-
     /// struct with constant generics
     #[derive(Debug, Clone, PartialEq, Redefined)]
     #[redefined_attr(transmute)]

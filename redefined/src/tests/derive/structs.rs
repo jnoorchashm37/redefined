@@ -81,12 +81,6 @@ mod derive_no_source {
         pub vals: Vec<Y>,
     }
 
-    impl<X, Y> GenericTypeStructA<X, Y> {
-        pub fn new(d: X, vals: Vec<Y>) -> Self {
-            Self { p: Default::default(), d, vals }
-        }
-    }
-
     /// struct with constant generics
     #[derive(Debug, Clone, PartialEq, Redefined)]
     pub struct GenericConstantStructA<const XVAL: usize> {
@@ -127,7 +121,7 @@ mod derive_no_source {
         pub n:       i128,
         #[redefined(field((GenericLifetimeStructA, default)))]
         pub inner_a: GenericLifetimeStructA<'a, 'b>,
-        #[redefined(field((BasicStructA, default)))]
+        #[redefined(field((BasicStructA, BasicStructARedefined)))]
         pub inner_b: Vec<BasicStructA>,
     }
 

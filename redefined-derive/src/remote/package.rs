@@ -1,11 +1,9 @@
-use std::io::{BufRead, Read};
+use std::io::BufRead;
 
-use super::{
-    fetch::RemoteTypeText,
-    types::{CratesIoCallRequest, RemoteType, RemoteTypeMeta},
-};
+use super::types::CratesIoCallRequest;
 use crate::remote::types::{workspace_dir, GithubApiFileTree};
 
+/// parsing of the package from crates-io OR github
 #[derive(Debug, Clone)]
 pub struct Package {
     pub root_url: String,
@@ -104,42 +102,16 @@ impl PackageKind {
     }
 }
 
+/// retrieves github urls from crates-io
 #[derive(Debug, Clone)]
 pub struct GithubApiUrls {
-    pub root_url:             String,
-    pub file_tree_url:        String,
-    pub base_contents_url:    String,
-    pub commit:               String,
-    pub cached_file:          String,
-    pub file_cache_path:      String,
-    pub root_file_cache_path: String,
+    pub root_url:          String,
+    pub file_tree_url:     String,
+    pub base_contents_url: String,
+    pub commit:            String,
 }
 
 impl GithubApiUrls {
-    /// whether or not the cached result exists
-    pub fn check_file_exists(&self) -> bool {
-        let redefined_file_cache = std::path::Path::new(&self.root_file_cache_path);
-        if redefined_file_cache.exists() && redefined_file_cache.is_dir() {
-            let repo_cached_results_path_str = self.file_cache_path.replace("/files", "/cached");
-            let repo_cached_results_path = std::path::Path::new(&repo_cached_results_path_str);
-            if repo_cached_results_path.exists() && repo_cached_results_path.is_dir() {
-                let file_path = std::path::Path::new(&self.cached_file);
-                if file_path.exists() {
-                    return true
-                }
-            } else {
-                std::fs::create_dir_all(&repo_cached_results_path)
-                    .expect(&format!("Failed to create the redefined file cache for repo: {}", repo_cached_results_path_str));
-            }
-
-            return false
-        } else {
-            std::fs::create_dir_all(&redefined_file_cache)
-                .expect(&format!("Failed to create the redefined file cache: {}", self.root_file_cache_path));
-            return false
-        }
-    }
-
     pub async fn get_all_urls(&self, web_client: &reqwest::Client) -> reqwest::Result<Vec<(String, String)>> {
         let tree_text = web_client
             .get(&self.file_tree_url)
@@ -162,104 +134,5 @@ impl GithubApiUrls {
             .collect();
 
         Ok(all_paths)
-    }
-
-    pub fn fetch_from_file_cache(&self, type_searched: &RemoteTypeMeta) -> Option<RemoteTypeText> {
-        let redefined_file_cache = std::path::Path::new(&self.file_cache_path);
-        if !redefined_file_cache.exists() || !redefined_file_cache.is_dir() {
-            std::fs::create_dir_all(&redefined_file_cache).expect(&format!("Could not create file cache dir for {}", self.file_cache_path));
-            return None
-        }
-
-        let mut results = Vec::new();
-        let dir_values = std::fs::read_dir(redefined_file_cache)
-            .expect(&format!("Could not read file cache dir for {}", self.file_cache_path))
-            .collect::<Vec<_>>();
-        if dir_values.is_empty() {
-            return None
-        }
-        for entry in dir_values {
-            let entry = entry.expect(&format!("Could not get file cache dir entry for {}", self.file_cache_path));
-            let path = entry.path();
-
-            // Check if the entry is a file
-            if path.is_file() {
-                // Open the file and read its contents
-                let mut file =
-                    std::fs::File::open(&path).expect(&format!("Could not open file {:?} from file cache for {}", &path, self.file_cache_path));
-                let mut file_contents = String::new();
-                file.read_to_string(&mut file_contents)
-                    .expect(&format!("Could not read file {:?} to string for {}", path, self.file_cache_path));
-
-                let p = path.as_path().to_str().unwrap().to_string();
-                if let Some(r) = RemoteTypeText::parse_page(p.clone(), file_contents, type_searched) {
-                    results.push(r)
-                }
-            }
-        }
-
-        if results.len() == 0 {
-            //panic!("No Results From File Cache For Package: {:?}", self);
-            None
-        } else if results.len() > 1 {
-            panic!("Too Many Results From File Cache For Package: {:?}\nResults: {:?}", self, results);
-        } else {
-            Some(results.first().unwrap().clone())
-        }
-    }
-}
-
-impl From<RemoteType> for GithubApiUrls {
-    fn from(value: RemoteType) -> Self {
-        let (commit, mut split_owner) = if value.package.kind.is_crates_io() {
-            let split_owner = value.package.root_url.split("/").collect::<Vec<_>>();
-
-            ("main".to_string(), split_owner)
-        } else {
-            let split_commit = value.package.root_url.split("#").collect::<Vec<_>>();
-            let commit = split_commit
-                .last()
-                .expect(&format!("Could not find github commit hash for package {:?}", value))
-                .to_string();
-
-            let split_owner = split_commit
-                .first()
-                .expect(&format!("Could not parse owner/repo for package {:?}", value))
-                .split("/")
-                .collect::<Vec<_>>();
-
-            (commit, split_owner)
-        };
-
-        let repo_and_query = split_owner
-            .pop()
-            .expect(&format!("Could not parse repo/query for package {:?}", value))
-            .split("?")
-            .collect::<Vec<_>>();
-
-        let repo = repo_and_query
-            .first()
-            .expect(&format!("Could not parse repo for package {:?}", value))
-            .to_string();
-
-        //panic!("Could not parse owner for package {:?}", value.package.root_url);
-        //panic!("Could not parse owner for package {:?}", split_owner);
-
-        let owner = split_owner
-            .pop()
-            .expect(&format!("Could not parse owner for package {:?}", value))
-            .to_string();
-
-        let file_tree_url = format!("https://api.github.com/repos/{owner}/{repo}/git/trees/{commit}?recursive=1");
-        let base_contents_url = format!("https://raw.github.com/{owner}/{repo}/{commit}/");
-
-        let root_path = workspace_dir();
-        let path = root_path.to_str().unwrap();
-
-        let root_file_cache_path = format!("{path}/target/redefined_file_cache");
-        let file_cache_path = format!("{root_file_cache_path}/{owner}_{repo}_{commit}/files");
-        let cached_file = format!("{root_file_cache_path}/{owner}_{repo}_{commit}/cached/{}", value.name);
-
-        Self { root_url: value.package.root_url, file_tree_url, base_contents_url, commit, cached_file, file_cache_path, root_file_cache_path }
     }
 }

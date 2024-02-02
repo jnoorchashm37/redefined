@@ -1104,6 +1104,8 @@ dependencies = [
  "redefined-derive",
  "redefined-test-types 0.1.0 (git+https://github.com/0xlagrange/redefined?branch=remote)",
  "ruint",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

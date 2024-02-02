@@ -1,11 +1,8 @@
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
-use syn::{self, parse::Parse, spanned::Spanned, Attribute, DataEnum, DataStruct, Field, Fields, Generics, Ident, Type, Variant, Visibility};
+use quote::quote;
+use syn::{self, Attribute, DataEnum, Fields, Generics, Ident, Variant, Visibility};
 
-use crate::{
-    attributes::{symbol::USE_FIELD, ContainerAttributes},
-    new_types::r#struct::parse_field,
-};
+use crate::new_types::r#struct::parse_field;
 
 pub fn parse_new_enum(
     data_enum: &DataEnum,

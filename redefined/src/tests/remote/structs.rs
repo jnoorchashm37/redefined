@@ -32,3 +32,20 @@ mod github {
     struct_test!(GenericLifetimeStructRedefined, GenericLifetimeStruct);
     struct_test!(ComplexStructARedefined, ComplexStructA);
 }
+
+mod derives {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+
+    redefined_remote!(#[derive(Serialize, Deserialize)] BasicStruct : "redefined-test-types");
+
+    #[test]
+    fn test_derive() {
+        let val: BasicStructRedefined = BasicStruct::default().into();
+
+        // using serde
+        let ser = serde_json::to_value(val);
+        assert!(ser.is_ok())
+    }
+}
