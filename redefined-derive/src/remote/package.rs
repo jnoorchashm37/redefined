@@ -158,7 +158,7 @@ impl GithubApiUrls {
             .into_iter()
             .map(|path| path.path)
             .filter(|p| p.ends_with(".rs"))
-            .map(|path| (format!("{}{path}?ref={}", self.base_contents_url, self.commit), path.replace("/", "_")))
+            .map(|path| (format!("{}{path}", self.base_contents_url), path.replace("/", "_")))
             .collect();
 
         Ok(all_paths)
@@ -251,7 +251,7 @@ impl From<RemoteType> for GithubApiUrls {
             .to_string();
 
         let file_tree_url = format!("https://api.github.com/repos/{owner}/{repo}/git/trees/{commit}?recursive=1");
-        let base_contents_url = format!("https://raw.github.com/{owner}/{repo}/master/");
+        let base_contents_url = format!("https://raw.github.com/{owner}/{repo}/{commit}/");
 
         let root_path = workspace_dir();
         let path = root_path.to_str().unwrap();
