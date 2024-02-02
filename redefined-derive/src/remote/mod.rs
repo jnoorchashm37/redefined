@@ -63,8 +63,8 @@ fn get_remote_type(parsed: &mut RemoteType, remote_type_meta: &RemoteTypeMeta) -
     if github_api_urls.check_file_exists() {
         return (RemoteTypeText::parse_file_cache(&github_api_urls.file_cache_path).type_text, None)
     }
-    if let Some((result, path)) = github_api_urls.fetch_from_file_cache(remote_type_meta) {
-        (result.type_text, Some(format!("{path}/{}", remote_type_meta.name)))
+    if let Some(result) = github_api_urls.fetch_from_file_cache(remote_type_meta) {
+        (result.type_text, Some(github_api_urls.cached_file))
     } else {
         let all_urls = rt
             .block_on(github_api_urls.get_all_urls(&web_client))
@@ -91,7 +91,7 @@ fn get_remote_type(parsed: &mut RemoteType, remote_type_meta: &RemoteTypeMeta) -
             panic!("Too Many Results From Github For Package: {:?}\nResults: {:?}", parsed, results);
         }
 
-        (results.first().unwrap().type_text.clone(), Some(format!("{}/{}", github_api_urls.file_cache_path, remote_type_meta.name)))
+        (results.first().unwrap().type_text.clone(), Some(github_api_urls.cached_file))
     }
 }
 

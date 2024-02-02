@@ -120,13 +120,22 @@ impl GithubApiUrls {
     pub fn check_file_exists(&self) -> bool {
         let redefined_file_cache = std::path::Path::new(&self.root_file_cache_path);
         if redefined_file_cache.exists() && redefined_file_cache.is_dir() {
-            let file_path = std::path::Path::new(&self.cached_file);
-            if file_path.exists() {
-                return true
+            let repo_cached_results_path_str = self.file_cache_path.replace("/files", "/cached");
+            let repo_cached_results_path = std::path::Path::new(&repo_cached_results_path_str);
+            if repo_cached_results_path.exists() && repo_cached_results_path.is_dir() {
+                let file_path = std::path::Path::new(&self.cached_file);
+                if file_path.exists() {
+                    return true
+                }
+            } else {
+                std::fs::create_dir_all(&repo_cached_results_path)
+                    .expect(&format!("Failed to create the redefined file cache for repo: {}", repo_cached_results_path_str));
             }
+
             return false
         } else {
-            std::fs::create_dir_all(&redefined_file_cache).expect("Failed to create the redefined file cache");
+            std::fs::create_dir_all(&redefined_file_cache)
+                .expect(&format!("Failed to create the redefined file cache: {}", self.root_file_cache_path));
             return false
         }
     }
@@ -155,7 +164,7 @@ impl GithubApiUrls {
         Ok(all_paths)
     }
 
-    pub fn fetch_from_file_cache(&self, type_searched: &RemoteTypeMeta) -> Option<(RemoteTypeText, String)> {
+    pub fn fetch_from_file_cache(&self, type_searched: &RemoteTypeMeta) -> Option<RemoteTypeText> {
         let redefined_file_cache = std::path::Path::new(&self.file_cache_path);
         if !redefined_file_cache.exists() || !redefined_file_cache.is_dir() {
             std::fs::create_dir_all(&redefined_file_cache).expect(&format!("Could not create file cache dir for {}", self.file_cache_path));
@@ -182,10 +191,9 @@ impl GithubApiUrls {
                 file.read_to_string(&mut file_contents)
                     .expect(&format!("Could not read file {:?} to string for {}", path, self.file_cache_path));
 
-                // Append the file contents to the main string
                 let p = path.as_path().to_str().unwrap().to_string();
                 if let Some(r) = RemoteTypeText::parse_page(p.clone(), file_contents, type_searched) {
-                    results.push((r, p))
+                    results.push(r)
                 }
             }
         }
@@ -204,21 +212,11 @@ impl GithubApiUrls {
 impl From<RemoteType> for GithubApiUrls {
     fn from(value: RemoteType) -> Self {
         let (commit, mut split_owner) = if value.package.kind.is_crates_io() {
-            let split_owner = value
-                .package
-                .root_url
-                .split("/")
-                .into_iter()
-                .collect::<Vec<_>>();
+            let split_owner = value.package.root_url.split("/").collect::<Vec<_>>();
 
             ("main".to_string(), split_owner)
         } else {
-            let split_commit = value
-                .package
-                .root_url
-                .split("#")
-                .into_iter()
-                .collect::<Vec<_>>();
+            let split_commit = value.package.root_url.split("#").collect::<Vec<_>>();
             let commit = split_commit
                 .last()
                 .expect(&format!("Could not find github commit hash for package {:?}", value))
@@ -228,14 +226,19 @@ impl From<RemoteType> for GithubApiUrls {
                 .first()
                 .expect(&format!("Could not parse owner/repo for package {:?}", value))
                 .split("/")
-                .into_iter()
                 .collect::<Vec<_>>();
 
             (commit, split_owner)
         };
 
-        let repo = split_owner
+        let repo_and_query = split_owner
             .pop()
+            .expect(&format!("Could not parse repo/query for package {:?}", value))
+            .split("?")
+            .collect::<Vec<_>>();
+
+        let repo = repo_and_query
+            .first()
             .expect(&format!("Could not parse repo for package {:?}", value))
             .to_string();
 
