@@ -67,7 +67,7 @@ impl Package {
     /// attempts the fetch the type from the cached files of the repo
     pub fn fetch_from_file_cache(&self, type_searched: &str) -> ParsedRemoteType {
         let package_dir = self.kind.fetch_from_cargo(&self.version);
-        panic!("PATH: {:?}", package_dir.path().as_os_str());
+        //panic!("PATH: {:?}", package_dir.path().as_os_str());
 
         let mut paths = Vec::new();
         get_all_files(&package_dir, &mut paths);
