@@ -122,8 +122,10 @@ impl GithubApiUrls {
             .await
             .expect("Could not deserialize all url path results to text");
 
-        let tree: GithubApiFileTree = serde_json::from_str(&tree_text)
-            .expect(&format!("Could not deserialize all text of all url path results to text to GithubApiFileTree: {}", tree_text));
+        let tree: GithubApiFileTree = serde_json::from_str(&tree_text).expect(&format!(
+            "Could not deserialize all text of all url path results from file {} to text to GithubApiFileTree: {tree_text}",
+            self.file_tree_url
+        ));
 
         let all_paths = tree
             .tree
