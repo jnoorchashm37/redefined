@@ -158,10 +158,10 @@ impl Parse for RemoteType {
 
 impl Into<(GithubApiUrls, FileCache)> for RemoteType {
     fn into(self) -> (GithubApiUrls, FileCache) {
-        let (commit, mut split_owner) = if self.package.kind.is_crates_io() {
+        let (commit, mut split_owner, is_crates_io) = if self.package.kind.is_crates_io() {
             let split_owner = self.package.root_url.split("/").collect::<Vec<_>>();
 
-            ("main".to_string(), split_owner)
+            ("main".to_string(), split_owner, true)
         } else {
             let split_commit = self.package.root_url.split("#").collect::<Vec<_>>();
             let commit = split_commit
@@ -175,7 +175,7 @@ impl Into<(GithubApiUrls, FileCache)> for RemoteType {
                 .split("/")
                 .collect::<Vec<_>>();
 
-            (commit, split_owner)
+            (commit, split_owner, false)
         };
 
         let repo_and_query = split_owner
@@ -208,7 +208,7 @@ impl Into<(GithubApiUrls, FileCache)> for RemoteType {
         let file_cache_path = format!("{root_file_cache_path}/{owner}_{repo}_{commit}/files");
         let cached_file = format!("{root_file_cache_path}/{owner}_{repo}_{commit}/cached/{}", self.name);
 
-        let github_api_urls = GithubApiUrls { root_url: self.package.root_url, file_tree_url, base_contents_url, commit };
+        let github_api_urls = GithubApiUrls { root_url: self.package.root_url, file_tree_url, base_contents_url, commit, is_crates_io };
 
         let file_cache = FileCache { cached_file, file_cache_path, root_file_cache_path };
 

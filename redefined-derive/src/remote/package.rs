@@ -109,6 +109,7 @@ pub struct GithubApiUrls {
     pub file_tree_url:     String,
     pub base_contents_url: String,
     pub commit:            String,
+    pub is_crates_io:      bool,
 }
 
 impl GithubApiUrls {
