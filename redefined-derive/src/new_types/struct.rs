@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
@@ -73,22 +73,17 @@ pub fn parse_field(field: &Field, is_remote: bool, generics_skip_remote: &[Ident
             copied_field_attrs.push(attr)
         }
     }
-
+    let mut attr_types = HashMap::new();
     if let Some(attr) = field_attrs.iter().find(|s| s.symbol == USE_FIELD).cloned() {
-        let mut attr_types = attr.list_tuple_idents.unwrap().into();
-
-        /*
-        panic!("#[redefined(field(...)) must either have 0 (default redefined type) or 1 (custom redefined type) in 'field(...)'")
-         */
-
-        ty = parse_type_to_redefined(&ty, &mut attr_types, false, generics_skip_remote);
-
-        if !attr_types.is_empty() {
-            panic!("#[redefined(field(...))' must have the same length as the number of types - remaining: {:?}", attr_types)
-        }
-    } else if is_remote {
-        ty = parse_type_to_redefined(&ty, &mut VecDeque::new(), true, generics_skip_remote);
+        attr_types = attr
+            .list_tuple_idents
+            .unwrap()
+            .into_iter()
+            .map(|(source, target)| (source, target))
+            .collect();
     }
+
+    ty = parse_type_to_redefined(&ty, &attr_types, is_remote, generics_skip_remote);
 
     let tokens = quote! {
         #(#copied_field_attrs)*
@@ -98,12 +93,7 @@ pub fn parse_field(field: &Field, is_remote: bool, generics_skip_remote: &[Ident
     Ok(tokens)
 }
 
-pub fn parse_type_to_redefined(
-    src_type: &Type,
-    new_type_names: &mut VecDeque<(Ident, Ident)>,
-    is_remote: bool,
-    generics_skip_remote: &[Ident],
-) -> Type {
+pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &HashMap<Ident, Ident>, is_remote: bool, generics_skip_remote: &[Ident]) -> Type {
     /*
     match &src_type {
         Type::BareFn(_) => unimplemented!(),
@@ -148,33 +138,24 @@ pub fn parse_type_to_redefined(
                 //panic!("TOOOO\n {}\n{:?}\n{}", seg.ident, new_type_names.pop_front(),
                 // new_type_names.len(), seg.arguments);
 
-                if let Some((source, target)) = new_type_names
-                    .clone()
-                    .iter()
-                    .find(|(source, _)| source == &seg.ident)
-                {
-                    if &seg.ident == source {
-                        if target == USE_DEFAULT_FIELD {
-                            //panic!("TOOOO\n {:?}\n", seg.ident);
-                            seg.ident = Ident::new(&format!("{}Redefined", seg.ident), seg.span())
-                        } else if target == USE_SAME_FIELD_VALUE {
-                            ()
-                        } else {
-                            seg.ident = target.clone()
-                        }
+                if let Some(target) = new_type_names.get(&seg.ident) {
+                    if target == USE_DEFAULT_FIELD {
+                        //panic!("TOOOO\n {:?}\n", seg.ident);
+                        seg.ident = Ident::new(&format!("{}Redefined", seg.ident), seg.span())
+                    } else if target == USE_SAME_FIELD_VALUE {
+                        ()
+                    } else {
+                        seg.ident = target.clone()
                     }
-                    new_type_names.retain(|(s, t)| s != source && t != target);
                 } else {
                     match &mut seg.arguments {
                         syn::PathArguments::None => {
                             //panic!("TOOOO\n {}\n{}", seg.ident, Primitive::is_primitive(&seg.ident));
-                            if let Some((source, target)) = new_type_names.pop_front() {
-                                if seg.ident == source {
-                                    if target == USE_DEFAULT_FIELD {
-                                        seg.ident = Ident::new(&format!("{}Redefined", seg.ident), seg.span())
-                                    } else {
-                                        seg.ident = target
-                                    }
+                            if let Some(target) = new_type_names.get(&seg.ident) {
+                                if target == USE_DEFAULT_FIELD {
+                                    seg.ident = Ident::new(&format!("{}Redefined", seg.ident), seg.span())
+                                } else {
+                                    seg.ident = target.clone()
                                 }
                             } else if is_remote {
                                 if !is_simple_primitive(&seg.ident.to_string()) && !generics_skip_remote.contains(&seg.ident) {
@@ -196,6 +177,15 @@ pub fn parse_type_to_redefined(
             });
 
             Type::Path(path)
+        }
+        Type::Tuple(t) => {
+            let mut tuple = t.clone();
+            tuple
+                .elems
+                .iter_mut()
+                .for_each(|e| *e = parse_type_to_redefined(&e, new_type_names, is_remote, generics_skip_remote));
+
+            Type::Tuple(tuple)
         }
         _ => panic!("FIELD IS OF TYPE: {}", src_type.to_token_stream()),
     }
