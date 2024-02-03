@@ -35,9 +35,26 @@ fn parse_remote_type_text(remote_type_name: &str, remote_type_text: &str, derive
         #final_struct_def
         }
     } else {
-        let remote_type_text = remote_type_text.replace(remote_type_name, &format!("{}Redefined", remote_type_name));
+        // let remote_type_text = remote_type_text
+        //     .replace(&format!("struct {}", remote_type_name), &format!("struct
+        // {}Redefined", remote_type_name))     .replace(&format!("enum {}",
+        // remote_type_name), &format!("enum {}Redefined", remote_type_name));
 
         let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
+        let redefined_struct_def = derive::expand_derive_redefined(&struct_def, true).unwrap_or_else(syn::Error::into_compile_error);
+
+        //panic!("DEF: \n{:?}", redefined_struct_def.to_string());
+
+        let mod_redefined_struct_def = redefined_struct_def
+            .to_string()
+            .replace("#[derive(Redefined)]", "")
+            .replace(&format!("#[redefined({})]", remote_type_name), "");
+
+        let final_struct_def: DeriveInput = syn::parse_str(&mod_redefined_struct_def)?;
+
+        //panic!("DEF: \n{:?}", final_struct_def.to_token_stream().to_string());
+
+        // let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
 
         let remote_type = Ident::new(remote_type_name, struct_def.span());
         quote! {
@@ -45,7 +62,7 @@ fn parse_remote_type_text(remote_type_name: &str, remote_type_text: &str, derive
             #[derive(#(#derives),*)]
             #[redefined(#remote_type)]
             #[redefined_attr(transmute)]
-            #struct_def
+            #final_struct_def
         }
     };
 

@@ -54,29 +54,64 @@ mod derives {
 }
 
 mod lol {
-    use alloy_primitives::FixedBytes;
-    use derive_more::{Deref, DerefMut, From, Index, IndexMut, IntoIterator};
-    use reth_primitives::alloy_primitives;
+    use malachite::{platform_64::Limb, Natural, Rational};
+    use rkyv::{Archive as rkyvArchive, Deserialize as rkyvDeserialize, Serialize as rkyvSerialize};
 
     use crate::{redefined_remote, Redefined, RedefinedConvert};
 
+    // Rational
     redefined_remote!(
         #[derive(
             Debug,
             Clone,
-            Copy,
             PartialEq,
             Eq,
-            PartialOrd,
-            Ord,
             Hash,
-            Deref,
-            DerefMut,
-            From,
-            Index,
-            IndexMut,
-            IntoIterator,
         )]
-        FixedBytes : "alloy-primitives" : no_impl
+        Rational : "malachite-q"
     );
+
+    // Natural
+    redefined_remote!(
+        #[derive(
+            Debug,
+            Clone,
+            PartialEq,
+            Eq,
+            Hash,
+            rkyvSerialize,
+            rkyvDeserialize,
+            rkyvArchive,
+        )]
+        Natural : "malachite-nz"
+    );
+
+    // InnerNatural
+    redefined_remote!(
+        #[derive(
+            Debug,
+            Clone,
+            PartialEq,
+            Eq,
+            Hash,
+            rkyvSerialize,
+            rkyvDeserialize,
+            rkyvArchive,
+        )]
+        InnerNatural : "malachite-nz" : no_impl
+    );
+
+    /*
+    #[derive(Clone, Eq, Hash, PartialEq)]
+    pub(crate) enum InnerNatural {
+        Small(LimbRedefined),
+        Large(Vec<LimbRedefined>),
+    }
+    */
+    pub type LimbRedefined = u64;
+
+    fn t() {
+        let t: RationalRedefined;
+        let n: NaturalRedefined;
+    }
 }
