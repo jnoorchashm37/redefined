@@ -185,6 +185,7 @@ pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &HashMap<Ident, 
                 .iter_mut()
                 .for_each(|e| *e = parse_type_to_redefined(&e, new_type_names, is_remote, generics_skip_remote));
 
+            panic!("TUPLE: {:?}", tuple.to_token_stream().to_string());
             Type::Tuple(tuple)
         }
         _ => panic!("FIELD IS OF TYPE: {}", src_type.to_token_stream()),
