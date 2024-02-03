@@ -118,7 +118,7 @@ impl Parse for RemoteType {
 
         let this = Self { name, package, derives, no_impl };
 
-        panic!("NO IMPL: \n{:?}", time);
+        panic!("NO IMPL: \n{:?}", this);
 
         Ok(this)
     }
