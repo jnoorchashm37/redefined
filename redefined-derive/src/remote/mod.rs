@@ -3,7 +3,7 @@ mod package;
 mod types;
 
 use proc_macro2::{Ident, TokenStream};
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::{bracketed, parenthesized, parse::Parse, spanned::Spanned, DeriveInput, LitStr, Token};
 
 use self::{package::Package, types::write_to_file_cache};
@@ -17,27 +17,44 @@ pub fn expand_redefined_remote(input: TokenStream) -> syn::Result<TokenStream> {
 
 /// parses the remote type into tokens
 fn parse_remote_type_text(remote_type_name: &str, remote_type_text: &str, derives: Vec<Ident>, no_impl: bool) -> syn::Result<TokenStream> {
-    let remote_type_text = remote_type_text.replace(remote_type_name, &format!("{}Redefined", remote_type_name));
-
-    let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
-    let redefined_struct_def = derive::expand_derive_redefined(&struct_def, true).unwrap_or_else(syn::Error::into_compile_error);
-
-    let remote_type = Ident::new(remote_type_name, struct_def.span());
-
     let tokens = if no_impl {
+        let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
+        let redefined_struct_def = derive::expand_derive_redefined(&struct_def, true).unwrap_or_else(syn::Error::into_compile_error);
+
+        let mod_redefined_struct_def = redefined_struct_def
+            .to_string()
+            .replace("#[derive(Redefined)]", "")
+            .replace(&format!("#[redefined({})]", remote_type_name), "");
+
+        let final_struct_def: DeriveInput = syn::parse_str(&mod_redefined_struct_def)?;
+
+        //panic!("EE: {:?}", final_struct_def.to_token_stream().to_string());
+
         let mut derives = derives;
         derives.retain(|d| d.to_string() != "Redefined");
         quote! {
         #[derive(#(#derives),*)]
-        #redefined_struct_def
+        #final_struct_def
         }
     } else {
+        let remote_type_text = remote_type_text.replace(remote_type_name, &format!("{}Redefined", remote_type_name));
+        let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
+
+        let remote_type = Ident::new(
+            &remote_type_name
+                .replace(&format!("struct {}Redefined", remote_type_name), &format!("struct {}", remote_type_name))
+                .replace(&format!("enum {}Redefined", remote_type_name), &format!("enum {}", remote_type_name)),
+            struct_def.span(),
+        );
+
+        //panic!("EE: {remote_type_name}");
+
         quote! {
 
             #[derive(#(#derives),*)]
             #[redefined(#remote_type)]
             #[redefined_attr(transmute)]
-            #redefined_struct_def
+            #struct_def
         }
     };
 
