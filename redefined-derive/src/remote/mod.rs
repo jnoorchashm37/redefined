@@ -7,6 +7,7 @@ use quote::quote;
 use syn::{bracketed, parenthesized, parse::Parse, spanned::Spanned, DeriveInput, LitStr, Token};
 
 use self::{package::Package, types::write_to_file_cache};
+use crate::derive;
 
 pub fn expand_redefined_remote(input: TokenStream) -> syn::Result<TokenStream> {
     let parsed: RemoteType = syn::parse2(input)?;
@@ -19,14 +20,16 @@ fn parse_remote_type_text(remote_type_name: &str, remote_type_text: &str, derive
     let remote_type_text = remote_type_text.replace(remote_type_name, &format!("{}Redefined", remote_type_name));
 
     let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
+    let redefined_struct_def = derive::expand_derive_redefined(&struct_def, true).unwrap_or_else(syn::Error::into_compile_error);
 
     let remote_type = Ident::new(remote_type_name, struct_def.span());
+
     let tokens = if no_impl {
         let mut derives = derives;
         derives.retain(|d| d.to_string() != "Redefined");
         quote! {
         #[derive(#(#derives),*)]
-        #struct_def
+        #redefined_struct_def
         }
     } else {
         quote! {
@@ -34,7 +37,7 @@ fn parse_remote_type_text(remote_type_name: &str, remote_type_text: &str, derive
             #[derive(#(#derives),*)]
             #[redefined(#remote_type)]
             #[redefined_attr(transmute)]
-            #struct_def
+            #redefined_struct_def
         }
     };
 

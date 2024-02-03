@@ -6,6 +6,7 @@ use syn::{self, parse::Parse, spanned::Spanned, Attribute, DataStruct, Field, Fi
 
 use super::parse_attributes;
 use crate::attributes::{
+    primitives::is_simple_primitive,
     symbol::{USE_DEFAULT_FIELD, USE_FIELD, USE_SAME_FIELD_VALUE},
     ContainerAttributes,
 };
@@ -17,6 +18,7 @@ pub fn parse_new_struct(
     generics: &Generics,
     visibility: &Visibility,
     attributes: &[Attribute],
+    is_remote: bool,
 ) -> syn::Result<TokenStream> {
     let fields = match &data_struct.fields {
         Fields::Named(fields_named) => &fields_named.named,
@@ -28,7 +30,7 @@ pub fn parse_new_struct(
 
     let struct_fields = fields
         .iter()
-        .map(|field| parse_field(field))
+        .map(|field| parse_field(field, is_remote))
         .collect::<syn::Result<Vec<_>>>()?;
 
     let tokens = if let Some(semi_token) = data_struct.semi_token {
@@ -52,7 +54,7 @@ pub fn parse_new_struct(
     Ok(tokens)
 }
 
-pub fn parse_field(field: &Field) -> syn::Result<TokenStream> {
+pub fn parse_field(field: &Field, is_remote: bool) -> syn::Result<TokenStream> {
     let ident = &field.ident;
     let _mutability = &field.mutability;
     let colon_token = field.colon_token;
@@ -76,11 +78,13 @@ pub fn parse_field(field: &Field) -> syn::Result<TokenStream> {
         panic!("#[redefined(field(...)) must either have 0 (default redefined type) or 1 (custom redefined type) in 'field(...)'")
          */
 
-        ty = parse_type_to_redefined(&ty, &mut attr_types);
+        ty = parse_type_to_redefined(&ty, &mut attr_types, false);
 
         if !attr_types.is_empty() {
             panic!("#[redefined(field(...))' must have the same length as the number of types - remaining: {:?}", attr_types)
         }
+    } else if is_remote {
+        ty = parse_type_to_redefined(&ty, &mut VecDeque::new(), true);
     }
 
     let tokens = quote! {
@@ -91,7 +95,7 @@ pub fn parse_field(field: &Field) -> syn::Result<TokenStream> {
     Ok(tokens)
 }
 
-pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &mut VecDeque<(Ident, Ident)>) -> Type {
+pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &mut VecDeque<(Ident, Ident)>, is_remote: bool) -> Type {
     /*
     match &src_type {
         Type::BareFn(_) => unimplemented!(),
@@ -112,19 +116,19 @@ pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &mut VecDeque<(I
     match src_type {
         Type::Array(a) => {
             let mut array = a.clone();
-            let new_type = parse_type_to_redefined(&a.elem, new_type_names);
+            let new_type = parse_type_to_redefined(&a.elem, new_type_names, is_remote);
             array.elem = Box::new(new_type);
             Type::Array(array)
         }
         Type::Reference(r) => {
             let mut refer = r.clone();
-            let new_type = parse_type_to_redefined(&r.elem, new_type_names);
+            let new_type = parse_type_to_redefined(&r.elem, new_type_names, is_remote);
             refer.elem = Box::new(new_type);
             Type::Reference(refer)
         }
         Type::Slice(s) => {
             let mut slice = s.clone();
-            let new_type = parse_type_to_redefined(&s.elem, new_type_names);
+            let new_type = parse_type_to_redefined(&s.elem, new_type_names, is_remote);
             slice.elem = Box::new(new_type);
             Type::Slice(slice)
         }
@@ -164,17 +168,21 @@ pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &mut VecDeque<(I
                                         seg.ident = target
                                     }
                                 }
+                            } else if is_remote {
+                                if !is_simple_primitive(&seg.ident.to_string()) {
+                                    seg.ident = Ident::new(&format!("{}Redefined", seg.ident), seg.span())
+                                }
                             }
                         }
 
                         syn::PathArguments::AngleBracketed(a) => a.args.iter_mut().for_each(|arg| match arg {
-                            syn::GenericArgument::Type(t) => *t = parse_type_to_redefined(&t, new_type_names),
+                            syn::GenericArgument::Type(t) => *t = parse_type_to_redefined(&t, new_type_names, is_remote),
                             _ => (),
                         }),
                         syn::PathArguments::Parenthesized(p) => p
                             .inputs
                             .iter_mut()
-                            .for_each(|t| *t = parse_type_to_redefined(&t, new_type_names)),
+                            .for_each(|t| *t = parse_type_to_redefined(&t, new_type_names, is_remote)),
                     }
                 }
             });
