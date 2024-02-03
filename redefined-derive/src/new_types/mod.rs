@@ -31,24 +31,34 @@ pub fn parse_type_without_source(outer: OuterContainer, input: &DeriveInput, is_
     Ok(quote!( #new_type_tokens ))
 }
 
-pub fn parse_attributes(attrs: &[Attribute], span: Span) -> syn::Result<(Vec<Ident>, Vec<Attribute>)> {
+pub fn parse_attributes(attrs: &[Attribute], span: Span) -> syn::Result<(Vec<Ident>, Vec<Attribute>, Vec<TokenStream>)> {
     let mut derive_attrs = vec![Ident::new("Redefined", span.clone())];
     let mut container_attrs = Vec::new();
+    let mut new_attrs = Vec::new();
 
     for attr in attrs {
         if attr.path().is_ident("redefined_attr") {
-            derive_attrs.extend(
-                attr.parse_args_with(ContainerAttributes::parse)?
-                    .0
-                    .into_iter()
-                    .filter_map(|a| a.list_idents)
-                    .flatten()
-                    .collect::<Vec<_>>(),
-            );
+            let redef_attrs = attr
+                .parse_args_with(ContainerAttributes::parse)?
+                .0
+                .into_iter()
+                .filter_map(|a| a.list_idents)
+                .flatten()
+                .collect::<Vec<_>>();
+
+            new_attrs = attr
+                .parse_args_with(ContainerAttributes::parse)?
+                .0
+                .into_iter()
+                .filter_map(|a| a.list_other_attrs)
+                .flatten()
+                .collect::<Vec<_>>();
+
+            derive_attrs.extend(redef_attrs);
         } else {
             container_attrs.push(attr.clone())
         }
     }
 
-    Ok((derive_attrs, container_attrs))
+    Ok((derive_attrs, container_attrs, new_attrs))
 }

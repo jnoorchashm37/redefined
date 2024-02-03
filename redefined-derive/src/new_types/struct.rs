@@ -27,7 +27,7 @@ pub fn parse_new_struct(
         _ => return Err(syn::Error::new_spanned(&data_struct.fields, "Expected a struct with named/unnamed fields")),
     };
 
-    let (derive_attrs, container_attrs) = parse_attributes(attributes, struct_name.span())?;
+    let (derive_attrs, container_attrs, new_attrs) = parse_attributes(attributes, struct_name.span())?;
 
     let struct_fields = fields
         .iter()
@@ -39,6 +39,7 @@ pub fn parse_new_struct(
             #[derive(#(#derive_attrs),*)]
             #[redefined(#struct_name)]
             #(#container_attrs)*
+            #(#new_attrs)*
             #visibility struct #new_struct_name #generics (#(#struct_fields),*)#semi_token
         }
     } else {
@@ -46,6 +47,7 @@ pub fn parse_new_struct(
             #[derive(#(#derive_attrs),*)]
             #[redefined(#struct_name)]
             #(#container_attrs)*
+            #(#new_attrs)*
             #visibility struct #new_struct_name #generics {
                 #(#struct_fields),*
             }

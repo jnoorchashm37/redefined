@@ -15,68 +15,6 @@ pub fn expand_redefined_remote(input: TokenStream) -> syn::Result<TokenStream> {
     parsed.execute()
 }
 
-/// parses the remote type into tokens
-fn parse_remote_type_text(
-    remote_type_name: &str,
-    remote_type_text: &str,
-    derives: Vec<Ident>,
-    no_impl: bool,
-    other_attr: TokenStream,
-) -> syn::Result<TokenStream> {
-    let tokens = if no_impl {
-        let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
-        let redefined_struct_def = derive::expand_derive_redefined(&struct_def, true).unwrap_or_else(syn::Error::into_compile_error);
-
-        let mod_redefined_struct_def = redefined_struct_def
-            .to_string()
-            .replace("#[derive(Redefined)]", "")
-            .replace(&format!("#[redefined({})]", remote_type_name), "");
-
-        let final_struct_def: DeriveInput = syn::parse_str(&mod_redefined_struct_def)?;
-
-        let mut derives = derives;
-        derives.retain(|d| d.to_string() != "Redefined");
-        quote! {
-        #[derive(#(#derives),*)]
-        #other_attr
-        #final_struct_def
-        }
-    } else {
-        // let remote_type_text = remote_type_text
-        //     .replace(&format!("struct {}", remote_type_name), &format!("struct
-        // {}Redefined", remote_type_name))     .replace(&format!("enum {}",
-        // remote_type_name), &format!("enum {}Redefined", remote_type_name));
-
-        let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
-        let redefined_struct_def = derive::expand_derive_redefined(&struct_def, true).unwrap_or_else(syn::Error::into_compile_error);
-
-        //panic!("DEF: \n{:?}", redefined_struct_def.to_string());
-
-        let mod_redefined_struct_def = redefined_struct_def
-            .to_string()
-            .replace("#[derive(Redefined)]", "")
-            .replace(&format!("#[redefined({})]", remote_type_name), "");
-
-        let final_struct_def: DeriveInput = syn::parse_str(&mod_redefined_struct_def)?;
-
-        //panic!("DEF: \n{:?}", final_struct_def.to_token_stream().to_string());
-
-        // let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
-
-        let remote_type = Ident::new(remote_type_name, struct_def.span());
-        quote! {
-
-            #[derive(#(#derives),*)]
-            #[redefined(#remote_type)]
-            #[redefined_attr(transmute)]
-            #other_attr
-            #final_struct_def
-        }
-    };
-
-    Ok(tokens)
-}
-
 #[derive(Debug, Clone)]
 pub struct RemoteType {
     pub name:        Ident,
@@ -90,16 +28,72 @@ impl RemoteType {
     /// runs the remote type execution
     /// added for future use in fields of structs
     pub fn execute(self) -> syn::Result<TokenStream> {
-        let derives = self.derives.clone();
-
         let remote_type_text = self
             .package
             .fetch_from_file_cache(&self.name.to_string())
             .type_text;
 
-        let tokens = parse_remote_type_text(&self.name.to_string(), &remote_type_text, derives, self.no_impl, self.other_attrs);
+        let tokens = self.parse_remote_type_text(&remote_type_text);
 
         tokens
+    }
+
+    /// parses the remote type into tokens
+    fn parse_remote_type_text(&self, remote_type_text: &str) -> syn::Result<TokenStream> {
+        let remote_type_name = self.name.to_string();
+        let (other_attr, derives) = (&self.other_attrs, &self.derives);
+        let tokens = if self.no_impl {
+            let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
+            let redefined_struct_def = derive::expand_derive_redefined(&struct_def, true).unwrap_or_else(syn::Error::into_compile_error);
+
+            let mod_redefined_struct_def = redefined_struct_def
+                .to_string()
+                .replace("#[derive(Redefined)]", "")
+                .replace(&format!("#[redefined({})]", remote_type_name), "");
+
+            let final_struct_def: DeriveInput = syn::parse_str(&mod_redefined_struct_def)?;
+
+            let mut derives = derives.clone();
+            derives.retain(|d| d.to_string() != "Redefined");
+            quote! {
+            #[derive(#(#derives),*)]
+            #other_attr
+            #final_struct_def
+            }
+        } else {
+            // let remote_type_text = remote_type_text
+            //     .replace(&format!("struct {}", remote_type_name), &format!("struct
+            // {}Redefined", remote_type_name))     .replace(&format!("enum {}",
+            // remote_type_name), &format!("enum {}Redefined", remote_type_name));
+
+            let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
+            let redefined_struct_def = derive::expand_derive_redefined(&struct_def, true).unwrap_or_else(syn::Error::into_compile_error);
+
+            //panic!("DEF: \n{:?}", redefined_struct_def.to_string());
+
+            let mod_redefined_struct_def = redefined_struct_def
+                .to_string()
+                .replace("#[derive(Redefined)]", "")
+                .replace(&format!("#[redefined({})]", remote_type_name), "");
+
+            let final_struct_def: DeriveInput = syn::parse_str(&mod_redefined_struct_def)?;
+
+            //panic!("DEF: \n{:?}", final_struct_def.to_token_stream().to_string());
+
+            // let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
+
+            let remote_type = Ident::new(&remote_type_name, struct_def.span());
+            quote! {
+
+                #[derive(#(#derives),*)]
+                #[redefined(#remote_type)]
+                #[redefined_attr(transmute)]
+                #other_attr
+                #final_struct_def
+            }
+        };
+
+        Ok(tokens)
     }
 }
 

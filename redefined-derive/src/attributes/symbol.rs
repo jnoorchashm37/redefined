@@ -18,6 +18,7 @@ pub const TRANSMUTE: Symbol = Symbol { s: "transmute", is_container: true, meta:
 pub const TO_SOURCE_FN: Symbol = Symbol { s: "to_source", is_container: true, meta: SymbolMeta::NameValue };
 pub const FROM_SOURCE_FN: Symbol = Symbol { s: "from_source", is_container: true, meta: SymbolMeta::NameValue };
 pub const DERIVE: Symbol = Symbol { s: "derive", is_container: true, meta: SymbolMeta::List };
+pub const OTHER_ATTR: Symbol = Symbol { s: "other", is_container: true, meta: SymbolMeta::List };
 pub const FIELD_FN: Symbol = Symbol { s: "func", is_container: false, meta: SymbolMeta::NameValue };
 pub const USE_FIELD: Symbol = Symbol { s: "field", is_container: false, meta: SymbolMeta::List };
 pub const USE_DEFAULT_FIELD: Symbol = Symbol { s: "default", is_container: false, meta: SymbolMeta::Path };
@@ -73,6 +74,7 @@ impl From<&str> for Symbol {
             "derive" => DERIVE,
             "default" => USE_DEFAULT_FIELD,
             "same" => USE_SAME_FIELD_VALUE,
+            "other" => OTHER_ATTR,
             _ => panic!("No attribute for {}", value),
         }
     }

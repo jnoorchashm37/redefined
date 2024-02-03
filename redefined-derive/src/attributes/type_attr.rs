@@ -1,7 +1,8 @@
 use std::fmt::Debug;
 
-use quote::ToTokens;
-use syn::{self, parenthesized, parse::Parse, parse_quote, Expr, Ident, LitStr, Token, TypeTuple};
+use proc_macro2::TokenStream;
+use quote::{quote, ToTokens};
+use syn::{self, bracketed, parenthesized, parse::Parse, parse_quote, Expr, Ident, LitStr, Token, TypeTuple};
 
 use super::symbol::*;
 
@@ -11,6 +12,7 @@ pub struct TypeAttribute {
     pub nv_tokens:         Option<Expr>,
     pub list_idents:       Option<Vec<Ident>>,
     pub list_tuple_idents: Option<Vec<(Ident, Ident)>>,
+    pub list_other_attrs:  Option<Vec<TokenStream>>,
 }
 
 impl Debug for TypeAttribute {
@@ -34,19 +36,31 @@ impl Parse for TypeAttribute {
         let symbol: Symbol = input.parse()?;
 
         let this = match symbol.meta {
-            SymbolMeta::Path => Self { symbol, nv_tokens: None, list_idents: None, list_tuple_idents: None },
+            SymbolMeta::Path => Self { symbol, nv_tokens: None, list_idents: None, list_tuple_idents: None, list_other_attrs: None },
             SymbolMeta::List => {
                 //let t = input.parse::<Ident>()?;
                 // panic!("NONONO, {}", t);
                 let content;
                 parenthesized!(content in input);
 
-                if content.peek(syn::Ident) {
+                if symbol == OTHER_ATTR {
+                    let mut other_container_attrs = Vec::new();
+                    let attrs;
+                    parenthesized!(attrs in content);
+                    let idents = content
+                        .parse_terminated(TokenStream::parse, Token![#])?
+                        .into_iter()
+                        .skip(1)
+                        .map(|stream| quote!(# #stream ))
+                        .collect::<Vec<_>>();
+
+                    Self { symbol, nv_tokens: None, list_idents: None, list_tuple_idents: None, list_other_attrs: Some(other_container_attrs) }
+                } else if content.peek(syn::Ident) {
                     let idents = content
                         .parse_terminated(Ident::parse, Token![,])?
                         .into_iter()
                         .collect();
-                    Self { symbol, nv_tokens: None, list_idents: Some(idents), list_tuple_idents: None }
+                    Self { symbol, nv_tokens: None, list_idents: Some(idents), list_tuple_idents: None, list_other_attrs: None }
                 } else {
                     let idents = content
                         .parse_terminated(TypeTuple::parse, Token![,])?
@@ -73,14 +87,14 @@ impl Parse for TypeAttribute {
                             (ident0, ident1)
                         })
                         .collect::<Vec<_>>();
-                    Self { symbol, nv_tokens: None, list_idents: None, list_tuple_idents: Some(idents) }
+                    Self { symbol, nv_tokens: None, list_idents: None, list_tuple_idents: Some(idents), list_other_attrs: None }
                 }
             }
             SymbolMeta::NameValue => {
                 input.parse::<Token![=]>()?;
                 let nv = input.parse::<Expr>()?;
                 let lit_nv: LitStr = parse_quote!(#nv);
-                Self { symbol, nv_tokens: Some(lit_nv.parse()?), list_idents: None, list_tuple_idents: None }
+                Self { symbol, nv_tokens: Some(lit_nv.parse()?), list_idents: None, list_tuple_idents: None, list_other_attrs: None }
             }
         };
 
