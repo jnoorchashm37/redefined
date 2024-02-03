@@ -16,7 +16,13 @@ pub fn expand_redefined_remote(input: TokenStream) -> syn::Result<TokenStream> {
 }
 
 /// parses the remote type into tokens
-fn parse_remote_type_text(remote_type_name: &str, remote_type_text: &str, derives: Vec<Ident>, no_impl: bool) -> syn::Result<TokenStream> {
+fn parse_remote_type_text(
+    remote_type_name: &str,
+    remote_type_text: &str,
+    derives: Vec<Ident>,
+    no_impl: bool,
+    other_attr: TokenStream,
+) -> syn::Result<TokenStream> {
     let tokens = if no_impl {
         let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
         let redefined_struct_def = derive::expand_derive_redefined(&struct_def, true).unwrap_or_else(syn::Error::into_compile_error);
@@ -32,6 +38,7 @@ fn parse_remote_type_text(remote_type_name: &str, remote_type_text: &str, derive
         derives.retain(|d| d.to_string() != "Redefined");
         quote! {
         #[derive(#(#derives),*)]
+        #other_attr
         #final_struct_def
         }
     } else {
@@ -62,6 +69,7 @@ fn parse_remote_type_text(remote_type_name: &str, remote_type_text: &str, derive
             #[derive(#(#derives),*)]
             #[redefined(#remote_type)]
             #[redefined_attr(transmute)]
+            #other_attr
             #final_struct_def
         }
     };
@@ -71,10 +79,11 @@ fn parse_remote_type_text(remote_type_name: &str, remote_type_text: &str, derive
 
 #[derive(Debug, Clone)]
 pub struct RemoteType {
-    pub name:    Ident,
-    pub package: Package,
-    pub derives: Vec<Ident>,
-    pub no_impl: bool,
+    pub name:        Ident,
+    pub package:     Package,
+    pub derives:     Vec<Ident>,
+    pub other_attrs: TokenStream,
+    pub no_impl:     bool,
 }
 
 impl RemoteType {
@@ -88,7 +97,7 @@ impl RemoteType {
             .fetch_from_file_cache(&self.name.to_string())
             .type_text;
 
-        let tokens = parse_remote_type_text(&self.name.to_string(), &remote_type_text, derives, self.no_impl);
+        let tokens = parse_remote_type_text(&self.name.to_string(), &remote_type_text, derives, self.no_impl, self.other_attrs);
 
         tokens
     }
@@ -105,7 +114,7 @@ impl Parse for RemoteType {
             bracketed_derive.parse::<Ident>()?; // derive
 
             let paran_derive;
-            parenthesized!(paran_derive in bracketed_derive);
+            parenthesized!(paran_derive in bracketed_derive); // (..)
 
             derives.extend(
                 paran_derive
@@ -113,6 +122,20 @@ impl Parse for RemoteType {
                     .into_iter()
                     .collect::<Vec<_>>(),
             );
+        }
+
+        let mut other_attrs = Default::default();
+        while input.peek(Token![#]) {
+            let hash_idnt = input.parse::<Token![#]>()?;
+
+            let bracketed_derive;
+            let bracket = bracketed!(bracketed_derive in input);
+            let attr: TokenStream = bracketed_derive.parse()?;
+
+            other_attrs = quote! {
+                #other_attrs
+                #[ #attr ]
+            };
         }
 
         let name: Ident = input
@@ -141,7 +164,7 @@ impl Parse for RemoteType {
             }
         }
 
-        let this = Self { name, package, derives, no_impl };
+        let this = Self { name, package, derives, no_impl, other_attrs };
 
         //panic!("NO IMPL: \n{:?}", this);
 

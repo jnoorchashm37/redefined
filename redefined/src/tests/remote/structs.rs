@@ -67,7 +67,11 @@ mod lol {
             PartialEq,
             Eq,
             Hash,
+            rkyvSerialize,
+            rkyvDeserialize,
+            rkyvArchive,
         )]
+        #[archive(check_bytes)]
         Rational : "malachite-q"
     );
 
