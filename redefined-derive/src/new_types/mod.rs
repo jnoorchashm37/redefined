@@ -13,11 +13,18 @@ pub fn parse_type_without_source(outer: OuterContainer, input: &DeriveInput, is_
     let input_generics = &input.generics;
     let source_type = Ident::new(&format!("{}Redefined", outer.target_type), outer.target_type.span());
 
+    let generic_vec = input_generics
+        .type_params()
+        .map(|p| p.ident.clone())
+        .collect::<Vec<_>>();
+
     let new_type_tokens = match &input_data {
         Data::Struct(data_struct) => {
-            parse_new_struct(data_struct, &outer.target_type, &source_type, input_generics, &input.vis, &input.attrs, is_remote)
+            parse_new_struct(data_struct, &outer.target_type, &source_type, input_generics, &input.vis, &input.attrs, is_remote, &generic_vec)
         }
-        Data::Enum(data_enum) => parse_new_enum(data_enum, &outer.target_type, &source_type, input_generics, &input.vis, &input.attrs, is_remote),
+        Data::Enum(data_enum) => {
+            parse_new_enum(data_enum, &outer.target_type, &source_type, input_generics, &input.vis, &input.attrs, is_remote, &generic_vec)
+        }
         _ => return Err(syn::Error::new_spanned(source_type, "Expected an enum or struct")),
     }?;
 

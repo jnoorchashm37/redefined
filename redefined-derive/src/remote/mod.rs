@@ -28,8 +28,6 @@ fn parse_remote_type_text(remote_type_name: &str, remote_type_text: &str, derive
 
         let final_struct_def: DeriveInput = syn::parse_str(&mod_redefined_struct_def)?;
 
-        //panic!("EE: {:?}", final_struct_def.to_token_stream().to_string());
-
         let mut derives = derives;
         derives.retain(|d| d.to_string() != "Redefined");
         quote! {
@@ -38,17 +36,10 @@ fn parse_remote_type_text(remote_type_name: &str, remote_type_text: &str, derive
         }
     } else {
         let remote_type_text = remote_type_text.replace(remote_type_name, &format!("{}Redefined", remote_type_name));
+
         let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
 
-        let remote_type = Ident::new(
-            &remote_type_name
-                .replace(&format!("struct {}Redefined", remote_type_name), &format!("struct {}", remote_type_name))
-                .replace(&format!("enum {}Redefined", remote_type_name), &format!("enum {}", remote_type_name)),
-            struct_def.span(),
-        );
-
-        //panic!("EE: {remote_type_name}");
-
+        let remote_type = Ident::new(remote_type_name, struct_def.span());
         quote! {
 
             #[derive(#(#derives),*)]

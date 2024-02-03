@@ -30,6 +30,10 @@ mod github {
     struct_test!((GenericConstantStructRedefined, 100), GenericConstantStruct, { GenericConstantStruct::new([2; 100]) });
     struct_test!(GenericLifetimeStructRedefined, GenericLifetimeStruct);
     struct_test!(ComplexStructARedefined, ComplexStructA);
+
+    fn t() {
+        let t: ComplexStructARedefined;
+    }
 }
 
 mod derives {

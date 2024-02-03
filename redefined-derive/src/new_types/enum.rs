@@ -12,11 +12,12 @@ pub fn parse_new_enum(
     visibility: &Visibility,
     attributes: &[Attribute],
     is_remote: bool,
+    generics_skip_remote: &[Ident],
 ) -> syn::Result<TokenStream> {
     let enum_fields = data_enum
         .variants
         .iter()
-        .map(|variant| parse_enum_variant(variant, is_remote))
+        .map(|variant| parse_enum_variant(variant, is_remote, generics_skip_remote))
         .collect::<syn::Result<Vec<_>>>()?;
 
     let tokens = quote! {
@@ -31,7 +32,7 @@ pub fn parse_new_enum(
     Ok(tokens)
 }
 
-fn parse_enum_variant(variant: &Variant, is_remote: bool) -> syn::Result<TokenStream> {
+fn parse_enum_variant(variant: &Variant, is_remote: bool, generics_skip_remote: &[Ident]) -> syn::Result<TokenStream> {
     let discriminant = &variant.discriminant;
     let ident = &variant.ident;
     let mut copied_field_attrs = Vec::new();
@@ -41,7 +42,7 @@ fn parse_enum_variant(variant: &Variant, is_remote: bool) -> syn::Result<TokenSt
             let f = fields
                 .named
                 .iter()
-                .map(|f| parse_field(f, is_remote))
+                .map(|f| parse_field(f, is_remote, generics_skip_remote))
                 .collect::<Result<Vec<_>, _>>()?;
             quote! { {#(#f),* }}
         }
@@ -49,7 +50,7 @@ fn parse_enum_variant(variant: &Variant, is_remote: bool) -> syn::Result<TokenSt
             let f = fields
                 .unnamed
                 .iter()
-                .map(|f| parse_field(f, is_remote))
+                .map(|f| parse_field(f, is_remote, generics_skip_remote))
                 .collect::<Result<Vec<_>, _>>()?;
             quote! { (#(#f),*)}
         }
