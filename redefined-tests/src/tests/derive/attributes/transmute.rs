@@ -1,13 +1,15 @@
+use redefined::Redefined;
 use redefined_test_types::structs::*;
 
-use crate::{struct_test, Redefined, RedefinedConvert};
+use crate::struct_test;
 
-mod derive_source {
+mod derive_transmute_source {
     use super::*;
 
     /// basic struct
     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
     #[redefined(BasicStruct)]
+    #[redefined_attr(transmute)]
     pub struct BasicStructA {
         pub val1: u64,
         pub val2: f64,
@@ -17,6 +19,7 @@ mod derive_source {
     /// struct with type generics
     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
     #[redefined(GenericTypeStruct)]
+    #[redefined_attr(transmute)]
     pub struct GenericTypeStructA<X, Y> {
         pub p:    u64,
         pub d:    X,
@@ -26,6 +29,7 @@ mod derive_source {
     /// struct with constant generics
     #[derive(Debug, Clone, PartialEq, Redefined)]
     #[redefined(GenericConstantStruct)]
+    #[redefined_attr(transmute)]
     pub struct GenericConstantStructA<const XVAL: usize> {
         pub p: u64,
         pub d: [i128; XVAL],
@@ -34,6 +38,7 @@ mod derive_source {
     /// struct with lifetime generics
     #[derive(Debug, Clone, PartialEq, Redefined)]
     #[redefined(GenericLifetimeStruct)]
+    #[redefined_attr(transmute)]
     pub struct GenericLifetimeStructA<'a, 'b> {
         pub p: &'a u64,
         pub d: &'b [i128; 10],
@@ -48,6 +53,7 @@ mod derive_source {
     /// complex struct 1
     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
     #[redefined(ComplexStructA)]
+    #[redefined_attr(transmute)]
     pub struct ComplexStructAA<'a, 'b> {
         pub n:       i128,
         pub inner_a: GenericLifetimeStructA<'a, 'b>,
@@ -61,12 +67,13 @@ mod derive_source {
     struct_test!(ComplexStructAA, ComplexStructA);
 }
 
-mod derive_no_source {
+mod derive_transmute_no_source {
     use super::*;
 
     /// basic struct
     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
     #[redefined_attr(derive(Debug, Clone, PartialEq, Default))]
+    #[redefined_attr(transmute)]
     pub struct BasicStructA {
         pub val1: u64,
         pub val2: f64,
@@ -75,6 +82,7 @@ mod derive_no_source {
 
     /// struct with type generics
     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
+    #[redefined_attr(transmute)]
     pub struct GenericTypeStructA<X, Y> {
         pub p:    u64,
         pub d:    X,
@@ -83,6 +91,7 @@ mod derive_no_source {
 
     /// struct with constant generics
     #[derive(Debug, Clone, PartialEq, Redefined)]
+    #[redefined_attr(transmute)]
     pub struct GenericConstantStructA<const XVAL: usize> {
         pub p: u64,
         pub d: [i128; XVAL],
@@ -97,6 +106,7 @@ mod derive_no_source {
     /// struct with lifetime generics
     #[derive(Debug, Clone, PartialEq, Redefined)]
     #[redefined_attr(derive(Debug, Clone, PartialEq))]
+    #[redefined_attr(transmute)]
     pub struct GenericLifetimeStructA<'a, 'b> {
         pub p: &'a u64,
         pub d: &'b [i128; 10],
@@ -117,11 +127,12 @@ mod derive_no_source {
     /// complex struct 1
     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
     #[redefined_attr(derive(Debug, Clone, PartialEq))]
+    #[redefined_attr(transmute)]
     pub struct ComplexStructAA<'a, 'b> {
         pub n:       i128,
         #[redefined(field((GenericLifetimeStructA, default)))]
         pub inner_a: GenericLifetimeStructA<'a, 'b>,
-        #[redefined(field((BasicStructA, BasicStructARedefined)))]
+        #[redefined(field((BasicStructA, default)))]
         pub inner_b: Vec<BasicStructA>,
     }
 

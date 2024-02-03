@@ -99,7 +99,7 @@ impl<'a> RedefinedContainer<'a> {
 
 
 
-             impl #impl_generics_tokens RedefinedConvert<#source_type #source_generics_tokens> for #target_type #target_generics
+             impl #impl_generics_tokens redefined::RedefinedConvert<#source_type #source_generics_tokens> for #target_type #target_generics
              #where_clause
                  {
                      fn from_source(src: #source_type #source_generics_tokens) -> Self {
@@ -115,7 +115,7 @@ impl<'a> RedefinedContainer<'a> {
             #where_clause
                 {
                     fn from(src: #source_type #source_generics_tokens) -> Self {
-                        Self::from_source(src)
+                        redefined::RedefinedConvert::from_source(src)
                     }
                 }
 
@@ -123,7 +123,7 @@ impl<'a> RedefinedContainer<'a> {
             #where_clause
                 {
                     fn into(self) -> #source_type #source_generics_tokens {
-                        Self::to_source(self)
+                        redefined::RedefinedConvert::to_source(self)
                     }
                 }
 
@@ -172,7 +172,7 @@ pub fn build_generics_with_where_clause(ty_generics: Generics) -> syn::Result<(G
         .zip(ty_generics.params.clone())
         .map(|(source, target)| {
             let (s, t) = (source.to_token_stream(), target.to_token_stream());
-            quote! { #t: RedefinedConvert<#s>,  }
+            quote! { #t: redefined::RedefinedConvert<#s>,  }
         })
         .collect::<Vec<_>>();
 

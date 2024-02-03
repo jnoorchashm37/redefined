@@ -1,7 +1,5 @@
-use redefined_derive::Redefined;
+use redefined::{Redefined, RedefinedConvert};
 use redefined_test_types::structs::PrivateFieldStruct;
-
-use crate::RedefinedConvert;
 
 /*
 

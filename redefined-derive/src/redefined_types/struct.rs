@@ -122,13 +122,13 @@ impl StructField {
 
             let func_name = attr.nv_tokens.unwrap();
 
-            quote! { #ident: RedefinedConvert::from_source(#func_name), }
+            quote! { #ident: redefined::RedefinedConvert::from_source(#func_name), }
         } else if fields_attrs.is_empty() {
             if let Some(idx) = self.is_unnamed_idx {
                 let index = syn::Index::from(idx);
-                quote! { RedefinedConvert::from_source(src.#index)}
+                quote! { redefined::RedefinedConvert::from_source(src.#index)}
             } else {
-                quote! { #ident: RedefinedConvert::from_source(src.#ident),}
+                quote! { #ident: redefined::RedefinedConvert::from_source(src.#ident),}
             }
         } else {
             unreachable!("cannot reach - should be no more field attrs: {:?}", fields_attrs);
@@ -142,9 +142,9 @@ impl StructField {
 
         let gen = if let Some(idx) = self.is_unnamed_idx {
             let index = syn::Index::from(idx);
-            quote! { self.#index.to_source() }
+            quote! { redefined::RedefinedConvert::to_source(self.#index) }
         } else {
-            quote! { #matched_field: self.#matched_field.to_source(), }
+            quote! { #matched_field: redefined::RedefinedConvert::to_source(self.#matched_field), }
         };
 
         Ok(gen)

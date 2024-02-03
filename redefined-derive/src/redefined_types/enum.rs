@@ -89,7 +89,7 @@ impl EnumField {
 
                 if !field_names.is_empty() {
                     let field_mappings = cloned_field_names.into_iter().map(|field_name| {
-                        quote! { #field_name: RedefinedConvert::from_source(#field_name) }
+                        quote! { #field_name: redefined::RedefinedConvert::from_source(#field_name) }
                     });
 
                     quote! {
@@ -107,7 +107,7 @@ impl EnumField {
                 let destructuring = quote! { (#(#field_vars),*) };
 
                 let construction = quote! {
-                    #target_type::#variant_name(#(RedefinedConvert::from_source(#field_vars)),*)
+                    #target_type::#variant_name(#(redefined::RedefinedConvert::from_source(#field_vars)),*)
                 };
 
                 let unamed_gen = quote! {
@@ -136,7 +136,7 @@ impl EnumField {
 
                 if !field_names.is_empty() {
                     let field_mappings = cloned_field_names.into_iter().map(|field_name| {
-                        quote! { #field_name: #field_name.to_source() }
+                        quote! { #field_name: redefined::RedefinedConvert::to_source(#field_name) }
                     });
 
                     quote! {
@@ -154,7 +154,7 @@ impl EnumField {
                 let destructuring = quote! { (#(#field_vars),*) };
 
                 let construction = quote! {
-                    #source_type::#variant_name(#(#field_vars.to_source()),*)
+                    #source_type::#variant_name(#(redefined::RedefinedConvert::to_source(#field_vars)),*)
                 };
 
                 let unamed_gen = quote! {

@@ -1,6 +1,7 @@
+use redefined::{redefined_remote, Redefined, RedefinedConvert};
 use redefined_test_types::structs::*;
 
-use crate::{redefined_remote, struct_test, Redefined, RedefinedConvert};
+use crate::struct_test;
 
 mod crates_io {
     use ruint::Uint;
@@ -57,7 +58,7 @@ mod lol {
     use malachite::{platform_64::Limb, Natural, Rational};
     use rkyv::{Archive as rkyvArchive, Deserialize as rkyvDeserialize, Serialize as rkyvSerialize};
 
-    use crate::{redefined_remote, Redefined, RedefinedConvert};
+    use super::*;
 
     // Rational
     redefined_remote!(

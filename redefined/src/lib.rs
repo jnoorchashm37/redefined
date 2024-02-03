@@ -1,9 +1,6 @@
 #![feature(trivial_bounds)]
 #![allow(trivial_bounds)]
 
-#[cfg(test)]
-mod tests;
-
 use std::{collections::HashMap, hash::Hash};
 
 pub use redefined_derive::{redefined_remote, Redefined};

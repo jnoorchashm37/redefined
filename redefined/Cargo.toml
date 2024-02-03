@@ -10,28 +10,6 @@ name = "redefined"
 # derive
 redefined-derive = { path = "../redefined-derive" }
 
-
-[dev-dependencies]
-# remote github
-redefined-test-types = { git = "https://github.com/0xlagrange/redefined", branch = "remote" }
-
-# remote crate-io
-ruint = "1.11.1"
-
-# serde (remote derive)
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-
-# misc
-paste = "1.0.14"
-quote = "1.0.35"
-
-
-rkyv = { version = "0.7", features = ["validation"] }
-malachite = "0.4.0"
-derive_more = "0.99.17"
-bytes = "1.5"
-
 [features]
 default = ["unsafe", "remote"]
 unsafe = ["redefined-derive/unsafe"]
