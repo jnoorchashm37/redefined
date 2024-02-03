@@ -181,5 +181,6 @@ pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &HashMap<Ident, 
         Type::Ptr(_) => panic!("FIELD IS OF TYPE: Ptr"),
         Type::TraitObject(t) => panic!("FIELD IS OF TYPE: TraitObject"),
         Type::Verbatim(_) => panic!("FIELD IS OF TYPE: Verbatim"),
+        _ => panic!("FIELD IS OF TYPE: _"),
     }
 }
