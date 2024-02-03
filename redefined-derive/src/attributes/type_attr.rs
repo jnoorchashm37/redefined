@@ -44,10 +44,7 @@ impl Parse for TypeAttribute {
                 parenthesized!(content in input);
 
                 if symbol == OTHER_ATTR {
-                    let mut other_container_attrs = Vec::new();
-                    let attrs;
-                    parenthesized!(attrs in content);
-                    let idents = content
+                    let other_container_attrs = content
                         .parse_terminated(TokenStream::parse, Token![#])?
                         .into_iter()
                         .skip(1)
