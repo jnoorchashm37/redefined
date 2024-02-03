@@ -168,7 +168,8 @@ pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &HashMap<Ident, 
                 .iter_mut()
                 .for_each(|e| *e = parse_type_to_redefined(&e, new_type_names, is_remote, generics_skip_remote));
 
-            panic!("TUPLE: {:?}\nMAP: {:?}", tuple.to_token_stream().to_string(), &new_type_names);
+            //panic!("TUPLE: {:?}\nMAP: {:?}", tuple.to_token_stream().to_string(),
+            // &new_type_names);
             Type::Tuple(tuple)
         }
         Type::BareFn(_) => panic!("FIELD IS OF TYPE: BareFn"),
