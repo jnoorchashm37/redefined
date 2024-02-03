@@ -89,7 +89,7 @@ pub fn parse_field(field: &Field, is_remote: bool, generics_skip_remote: &[Ident
     }
 
     let tokens = quote! {
-        #(#copied_field_attrs)*
+        #(# #copied_field_attrs)*
         #vis #ident #colon_token #ty
     };
 
