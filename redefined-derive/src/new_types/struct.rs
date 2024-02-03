@@ -94,23 +94,6 @@ pub fn parse_field(field: &Field, is_remote: bool, generics_skip_remote: &[Ident
 }
 
 pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &HashMap<Ident, Ident>, is_remote: bool, generics_skip_remote: &[Ident]) -> Type {
-    /*
-    match &src_type {
-        Type::BareFn(_) => unimplemented!(),
-        Type::Group(_) => unimplemented!(),
-        Type::ImplTrait(_) => unimplemented!(),
-        Type::Infer(_) => unimplemented!(),
-        Type::Macro(_) => unimplemented!(),
-        Type::Never(_) => unimplemented!(),
-        Type::Paren(_) => unimplemented!(),
-        Type::Ptr(_) => unimplemented!(),
-
-        Type::TraitObject(t) => unimplemented!(),
-        Type::Tuple(t) => unimplemented!(), // add this 1
-        Type::Verbatim(_) => unimplemented!(),
-    }
-    */
-
     match src_type {
         Type::Array(a) => {
             let mut array = a.clone();
@@ -188,6 +171,15 @@ pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &HashMap<Ident, 
             panic!("TUPLE: {:?}\nMAP: {:?}", tuple.to_token_stream().to_string(), &new_type_names);
             Type::Tuple(tuple)
         }
-        _ => panic!("FIELD IS OF TYPE: {}", src_type.to_token_stream()),
+        Type::BareFn(_) => panic!("FIELD IS OF TYPE: BareFn"),
+        Type::Group(_) => panic!("FIELD IS OF TYPE: Group"),
+        Type::ImplTrait(_) => panic!("FIELD IS OF TYPE: ImplTrait"),
+        Type::Infer(_) => panic!("FIELD IS OF TYPE: Infer"),
+        Type::Macro(_) => panic!("FIELD IS OF TYPE: Macro"),
+        Type::Never(_) => panic!("FIELD IS OF TYPE: Never"),
+        Type::Paren(_) => panic!("FIELD IS OF TYPE: Paren"),
+        Type::Ptr(_) => panic!("FIELD IS OF TYPE: Ptr"),
+        Type::TraitObject(t) => panic!("FIELD IS OF TYPE: TraitObject"),
+        Type::Verbatim(_) => panic!("FIELD IS OF TYPE: Verbatim"),
     }
 }
