@@ -46,13 +46,14 @@ pub fn parse_attributes(attrs: &[Attribute], span: Span) -> syn::Result<(Vec<Ide
                 .flatten()
                 .collect::<Vec<_>>();
 
-            new_attrs = attr
-                .parse_args_with(ContainerAttributes::parse)?
-                .0
-                .into_iter()
-                .filter_map(|a| a.list_other_attrs)
-                .flatten()
-                .collect::<Vec<_>>();
+            new_attrs.extend(
+                attr.parse_args_with(ContainerAttributes::parse)?
+                    .0
+                    .into_iter()
+                    .filter_map(|a| a.list_other_attrs)
+                    .flatten()
+                    .collect::<Vec<_>>(),
+            );
 
             derive_attrs.extend(redef_attrs);
         } else {
