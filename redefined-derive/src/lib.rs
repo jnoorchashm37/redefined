@@ -167,7 +167,7 @@ field + field((.., default)):
 #[proc_macro_derive(Redefined, attributes(redefined, redefined_attr))]
 pub fn derive_redefined(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
-    derive::expand_derive_redefined(&input)
+    derive::expand_derive_redefined(&input, false)
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }

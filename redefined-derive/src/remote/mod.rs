@@ -43,7 +43,7 @@ impl RemoteType {
         let (other_attr, derives) = (&self.other_attrs, &self.derives);
         let tokens = if self.no_impl {
             let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
-            let redefined_struct_def = derive::expand_derive_redefined(&struct_def).unwrap_or_else(syn::Error::into_compile_error);
+            let redefined_struct_def = derive::expand_derive_redefined(&struct_def, true).unwrap_or_else(syn::Error::into_compile_error);
 
             let mod_redefined_struct_def = redefined_struct_def
                 .to_string()
