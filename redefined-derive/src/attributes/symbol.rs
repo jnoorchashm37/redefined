@@ -21,9 +21,8 @@ pub const DERIVE: Symbol = Symbol { s: "derive", is_container: true, meta: Symbo
 pub const OTHER_ATTR: Symbol = Symbol { s: "other", is_container: true, meta: SymbolMeta::List };
 pub const FIELD_FN: Symbol = Symbol { s: "func", is_container: false, meta: SymbolMeta::NameValue };
 pub const USE_FIELD: Symbol = Symbol { s: "field", is_container: false, meta: SymbolMeta::List };
-pub const USE_DEFAULT_FIELDS: Symbol = Symbol { s: "default_fields", is_container: false, meta: SymbolMeta::Path };
-pub const USE_DEFAULT_FIELD: Symbol = Symbol { s: "default", is_container: false, meta: SymbolMeta::Path };
-pub const USE_SAME_FIELD_VALUE: Symbol = Symbol { s: "same", is_container: false, meta: SymbolMeta::Path };
+pub const USE_SAME_FIELDS: Symbol = Symbol { s: "same_fields", is_container: false, meta: SymbolMeta::Path };
+pub const USE_SAME_FIELD: Symbol = Symbol { s: "same", is_container: false, meta: SymbolMeta::Path };
 
 #[derive(Copy, Debug, Clone, PartialEq)]
 pub struct Symbol {
@@ -73,10 +72,9 @@ impl From<&str> for Symbol {
             "func" => FIELD_FN,
             "field" => USE_FIELD,
             "derive" => DERIVE,
-            "default" => USE_DEFAULT_FIELD,
-            "same" => USE_SAME_FIELD_VALUE,
+            "same" => USE_SAME_FIELD,
             "other" => OTHER_ATTR,
-            "default_fields" => USE_DEFAULT_FIELDS,
+            "same_fields" => USE_SAME_FIELDS,
             _ => panic!("No attribute for {}", value),
         }
     }

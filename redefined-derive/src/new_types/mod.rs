@@ -8,7 +8,7 @@ use syn::{parse::Parse, Attribute, Data, DeriveInput};
 use self::{r#enum::parse_new_enum, r#struct::parse_new_struct};
 use crate::{attributes::ContainerAttributes, outer::OuterContainer};
 
-pub fn parse_type_without_source(outer: OuterContainer, input: &DeriveInput, is_remote: bool) -> syn::Result<TokenStream> {
+pub fn parse_type_without_source(outer: OuterContainer, input: &DeriveInput) -> syn::Result<TokenStream> {
     let input_data = &input.data;
     let input_generics = &input.generics;
     let source_type = Ident::new(&format!("{}Redefined", outer.target_type), outer.target_type.span());
@@ -20,11 +20,9 @@ pub fn parse_type_without_source(outer: OuterContainer, input: &DeriveInput, is_
 
     let new_type_tokens = match &input_data {
         Data::Struct(data_struct) => {
-            parse_new_struct(data_struct, &outer.target_type, &source_type, input_generics, &input.vis, &input.attrs, is_remote, &generic_vec)
+            parse_new_struct(data_struct, &outer.target_type, &source_type, input_generics, &input.vis, &input.attrs, &generic_vec)
         }
-        Data::Enum(data_enum) => {
-            parse_new_enum(data_enum, &outer.target_type, &source_type, input_generics, &input.vis, &input.attrs, is_remote, &generic_vec)
-        }
+        Data::Enum(data_enum) => parse_new_enum(data_enum, &outer.target_type, &source_type, input_generics, &input.vis, &input.attrs, &generic_vec),
         _ => return Err(syn::Error::new_spanned(source_type, "Expected an enum or struct")),
     }?;
 
