@@ -66,11 +66,14 @@ impl EnumField {
     }
 
     pub fn parse_attributes_for_field(&mut self) -> syn::Result<()> {
-        if let Some(attr) = self.variant.attrs.first() {
+        let mut attrs = Vec::new();
+        while let Some(attr) = self.variant.attrs.first() {
             if attr.path().is_ident("redefined") {
-                self.field_attrs = attr.parse_args_with(ContainerAttributes::parse)?.0;
+                attrs.extend(attr.parse_args_with(ContainerAttributes::parse)?.0);
             }
         }
+        self.field_attrs = attrs;
+
         Ok(())
     }
 
