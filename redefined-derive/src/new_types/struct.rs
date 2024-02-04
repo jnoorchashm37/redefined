@@ -181,7 +181,7 @@ pub fn parse_type_to_redefined(
             tuple
                 .elems
                 .iter_mut()
-                .for_each(|e| *e = parse_type_to_redefined(&e, new_type_names, is_remote, generics_skip_remote));
+                .for_each(|e| *e = parse_type_to_redefined(&e, new_type_names, generics_skip_remote, use_default_fields));
 
             //panic!("TUPLE: {:?}\nMAP: {:?}", tuple.to_token_stream().to_string(),
             // &new_type_names);
