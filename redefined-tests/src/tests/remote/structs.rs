@@ -57,24 +57,28 @@ mod derives {
 mod lol {
     use std::{fmt, hash::Hash, str::FromStr};
 
-    use alloy_primitives::{hex, Address, Bytes as AlloyBytes, FixedBytes, Uint};
+    use alloy_primitives::{hex, Address, Bytes as AlloyBytes, Bytes, FixedBytes, Log, LogData, Uint};
     use derive_more::{Deref, DerefMut, From, Index, IndexMut, IntoIterator};
     use malachite::{platform_64::Limb, Natural, Rational};
     use redefined::{redefined_remote, Redefined, RedefinedConvert};
-    use rkyv::{Archive as rkyvArchive, Deserialize as rkyvDeserialize, Serialize as rkyvSerialize};
-    use serde::{Deserialize as serdeDeserialize, Deserializer, Serialize as serdeSerialize, Serializer};
+    use rkyv::{Archive as rkyvArchive, Archive, Deserialize as rDeserialize, Serialize as rSerialize};
+    use serde::{Deserialize as serdeDeserialize, Deserialize, Deserializer, Serialize as serdeSerialize, Serialize, Serializer};
 
     use super::*;
 
     // Uint
     redefined_remote!(
-        #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, rkyvSerialize, rkyvDeserialize, rkyvArchive)]
+        #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, rSerialize, rDeserialize, Archive)]
         [Uint] : "ruint"
     );
 
-    impl<const BITS: usize, const LIMBS: usize> Default for UintRedefined<BITS, LIMBS> {
-        fn default() -> Self {
-            Self { limbs: [0; LIMBS] }
+    impl<const BITS: usize, const LIMBS: usize> Serialize for UintRedefined<BITS, LIMBS> {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            let this: Uint<BITS, LIMBS> = (*self).into();
+            this.serialize(serializer)
         }
     }
 
@@ -98,22 +102,33 @@ mod lol {
             Index,
             IndexMut,
             IntoIterator,
-            rkyvSerialize,
-            rkyvDeserialize,
-            rkyvArchive,
+            rSerialize,
+            rDeserialize,
+            Archive,
         )]
         [FixedBytes] : "alloy-primitives"
     );
 
     pub type TxHashRedefined = FixedBytesRedefined<32>;
+    pub type B256Redefined = FixedBytesRedefined<32>;
 
-    impl<const N: usize> serdeSerialize for FixedBytesRedefined<N> {
+    impl<const N: usize> Serialize for FixedBytesRedefined<N> {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
             S: Serializer,
         {
             let this = self.to_source();
-            serdeSerialize::serialize(&this, serializer)
+            Serialize::serialize(&this, serializer)
+        }
+    }
+
+    impl<'de, const N: usize> Deserialize<'de> for FixedBytesRedefined<N> {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            let this: FixedBytes<N> = Deserialize::deserialize(deserializer)?;
+            Ok(this.into())
         }
     }
 
@@ -145,14 +160,15 @@ mod lol {
         Deref,
         DerefMut,
         From,
-        serde::Serialize,
+        Serialize,
+        Deserialize,
         Index,
         IndexMut,
         IntoIterator,
         Redefined,
-        rkyv::Serialize,
-        rkyv::Deserialize,
-        rkyv::Archive,
+        rSerialize,
+        rDeserialize,
+        Archive,
     )]
     #[redefined(Address)]
     #[archive_attr(derive(Hash, PartialEq, Eq))]
@@ -169,39 +185,17 @@ mod lol {
 
     /// Bytes
     /// Have not implements parsing 'Bytes::bytes' yet
-    #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, rkyv::Serialize, rkyv::Deserialize, rkyv::Archive, Redefined)]
-    #[redefined(AlloyBytes)]
+    #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, Deserialize, rSerialize, rDeserialize, Archive, Redefined)]
+    #[redefined(Bytes)]
     #[redefined_attr(to_source = "self.0.into()", from_source = "Self(src.to_vec())")]
-    pub struct AlloyBytesRedefined(pub Vec<u8>);
+    pub struct BytesRedefined(pub Vec<u8>);
 
-    #[derive(Debug, Default, Clone, Copy, PartialOrd, Ord, Redefined)]
-    #[redefined_attr(
-        derive(Debug, Clone, PartialEq, Eq, Hash, rkyvArchive, rkyvDeserialize, rkyvSerialize)
-    )]
-    #[redefined_attr(
-        other(#[archive_attr(derive(Hash, PartialEq, Eq))]), 
-    )]
-    pub struct Pair(#[redefined(field((Address, default)))] pub Address, #[redefined(field((Address, default)))] pub Address);
-
-    impl Pair {
-        pub fn ordered(&self) -> Self {
-            if self.0 <= self.1 {
-                Pair(self.0, self.1)
-            } else {
-                Pair(self.1, self.0)
-            }
-        }
-    }
-
-    impl Eq for Pair {}
-
-    impl PartialEq for Pair {
-        fn eq(&self, other: &Self) -> bool {
-            self.ordered().0 == other.ordered().0 && self.ordered().1 == other.ordered().1
-        }
-    }
+    redefined_remote!(
+        #[derives(Debug, PartialEq, Clone, Serialize, rSerialize, rDeserialize, Archive)]
+        [Log, LogData] : "alloy-primitives"
+    );
 
     fn t() {
-       // let t: ArchivedPairRedefined = ArchivedPairRedefined::hash();
+        // let t: ArchivedPairRedefined = ArchivedPairRedefined::hash();
     }
 }
