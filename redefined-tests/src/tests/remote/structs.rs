@@ -178,8 +178,4 @@ mod lol {
         #[derive(Debug, PartialEq, Clone, Serialize, rSerialize, rDeserialize, Archive)]
         [LogData] : "alloy-primitives"
     );
-
-    fn t() {
-        let t: LogRedefined<LogDataRedefined>;
-    }
 }

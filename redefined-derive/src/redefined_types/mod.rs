@@ -154,17 +154,18 @@ pub fn build_generics_with_where_clause(ty_generics: Generics) -> syn::Result<(G
     let source_generics = ty_generics
         .params
         .iter()
-        .map(|target_generic| {
+        .filter_map(|target_generic| {
             let mut source_generic = target_generic.clone();
             if let GenericParam::Type(s) = &mut source_generic {
                 if s.default.is_some() {
                     s.default = None;
                     s.eq_token = None;
+                    return None;
                 }
-                s.ident = Ident::new(&format!("{}R", s.ident), target_generic.span())
+                s.ident = Ident::new(&format!("{}R", s.ident), target_generic.span());
             }
 
-            source_generic
+            Some(source_generic)
         })
         .collect::<Vec<_>>();
 
@@ -172,16 +173,17 @@ pub fn build_generics_with_where_clause(ty_generics: Generics) -> syn::Result<(G
     let zip_generics = source_generics
         .iter()
         .zip(ty_generics.params.clone())
-        .map(|(source, target)| {
+        .filter_map(|(source, target)| {
             let mut target = target;
             if let GenericParam::Type(s) = &mut target {
                 if s.default.is_some() {
                     s.default = None;
                     s.eq_token = None;
+                    return None
                 }
             }
             let (s, t) = (source.to_token_stream(), target.to_token_stream());
-            quote! { #t: redefined::RedefinedConvert<#s>  }
+            Some(quote! { #t: redefined::RedefinedConvert<#s>  })
         })
         .collect::<Vec<_>>();
 
