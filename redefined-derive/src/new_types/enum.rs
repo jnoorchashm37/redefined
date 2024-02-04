@@ -2,6 +2,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{self, Attribute, DataEnum, Fields, Generics, Ident, Variant, Visibility};
 
+use super::parse_attributes;
 use crate::new_types::r#struct::parse_field;
 
 pub fn parse_new_enum(
@@ -19,10 +20,13 @@ pub fn parse_new_enum(
         .map(|variant| parse_enum_variant(variant, generics_skip_remote))
         .collect::<syn::Result<Vec<_>>>()?;
 
+    let (derive_attrs, container_attrs, new_attrs) = parse_attributes(attributes, enum_name.span())?;
+
     let tokens = quote! {
-        #[derive(Redefined)]
+        #[derive(#(#derive_attrs),*)]
         #[redefined(#enum_name)]
-        #(#attributes)*
+        #(#container_attrs)*
+        #(#new_attrs)*
         #visibility enum #new_enum_name #generics {
             #(#enum_fields),*
         }
