@@ -28,6 +28,8 @@ pub fn parse_type_without_source(outer: OuterContainer, input: &DeriveInput, is_
         _ => return Err(syn::Error::new_spanned(source_type, "Expected an enum or struct")),
     }?;
 
+    //panic!("NEW TYPE: \n{}", new_type_tokens.to_string());
+
     Ok(quote!( #new_type_tokens ))
 }
 

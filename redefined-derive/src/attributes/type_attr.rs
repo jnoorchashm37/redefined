@@ -47,9 +47,11 @@ impl Parse for TypeAttribute {
                     let other_container_attrs = content
                         .parse_terminated(TokenStream::parse, Token![#])?
                         .into_iter()
-                        .skip(1)
-                        .map(|stream| quote!(# #stream ))
+                        .map(|stream| quote!(#stream ))
                         .collect::<Vec<_>>();
+
+                    // panic!("SYMBOL:\n{:?}",
+                    // other_container_attrs.first().to_token_stream().to_string());
 
                     Self { symbol, nv_tokens: None, list_idents: None, list_tuple_idents: None, list_other_attrs: Some(other_container_attrs) }
                 } else if content.peek(syn::Ident) {

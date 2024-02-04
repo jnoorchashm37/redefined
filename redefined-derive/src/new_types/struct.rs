@@ -29,6 +29,8 @@ pub fn parse_new_struct(
 
     let (derive_attrs, container_attrs, new_attrs) = parse_attributes(attributes, struct_name.span())?;
 
+    // panic!("NEW ATTR: \n{:?}", new_attrs);
+
     let struct_fields = fields
         .iter()
         .map(|field| parse_field(field, is_remote, generics_skip_remote))

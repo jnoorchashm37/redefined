@@ -31,6 +31,7 @@ quote = "1.0.35"
 
 rkyv = { version = "0.7", features = ["validation"] }
 malachite = "0.4.0"
+alloy-primitives = { version = "0.6.0", features = ["rlp"] }
 derive_more = "0.99.17"
 bytes = "1.5"
 
