@@ -47,6 +47,7 @@ impl Parse for TypeAttribute {
                     let other_container_attrs = content
                         .parse_terminated(TokenStream::parse, Token![#])?
                         .into_iter()
+                        .skip(1)
                         .map(|stream| quote!(# #stream ))
                         .collect::<Vec<_>>();
 
