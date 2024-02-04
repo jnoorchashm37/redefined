@@ -7,7 +7,7 @@ use syn::{self, parse::Parse, spanned::Spanned, Attribute, DataStruct, Field, Fi
 use super::parse_attributes;
 use crate::attributes::{
     primitives::is_simple_primitive,
-    symbol::{USE_DEFAULT_FIELD, USE_FIELD, USE_SAME_FIELD_VALUE},
+    symbol::{USE_DEFAULT_FIELD, USE_DEFAULT_FIELDS, USE_FIELD, USE_SAME_FIELD_VALUE},
     ContainerAttributes,
 };
 
@@ -85,7 +85,13 @@ pub fn parse_field(field: &Field, is_remote: bool, generics_skip_remote: &[Ident
             .collect();
     }
 
-    ty = parse_type_to_redefined(&ty, &attr_types, is_remote, generics_skip_remote);
+    let use_default_fields = field_attrs
+        .iter()
+        .find(|s| s.symbol == USE_DEFAULT_FIELDS)
+        .is_some()
+        || is_remote;
+
+    ty = parse_type_to_redefined(&ty, &attr_types, generics_skip_remote, use_default_fields);
 
     let tokens = quote! {
         #(#copied_field_attrs)*
@@ -95,23 +101,28 @@ pub fn parse_field(field: &Field, is_remote: bool, generics_skip_remote: &[Ident
     Ok(tokens)
 }
 
-pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &HashMap<Ident, Ident>, is_remote: bool, generics_skip_remote: &[Ident]) -> Type {
+pub fn parse_type_to_redefined(
+    src_type: &Type,
+    new_type_names: &HashMap<Ident, Ident>,
+    generics_skip_remote: &[Ident],
+    use_default_fields: bool,
+) -> Type {
     match src_type {
         Type::Array(a) => {
             let mut array = a.clone();
-            let new_type = parse_type_to_redefined(&a.elem, new_type_names, is_remote, generics_skip_remote);
+            let new_type = parse_type_to_redefined(&a.elem, new_type_names, generics_skip_remote, use_default_fields);
             array.elem = Box::new(new_type);
             Type::Array(array)
         }
         Type::Reference(r) => {
             let mut refer = r.clone();
-            let new_type = parse_type_to_redefined(&r.elem, new_type_names, is_remote, generics_skip_remote);
+            let new_type = parse_type_to_redefined(&r.elem, new_type_names, generics_skip_remote, use_default_fields);
             refer.elem = Box::new(new_type);
             Type::Reference(refer)
         }
         Type::Slice(s) => {
             let mut slice = s.clone();
-            let new_type = parse_type_to_redefined(&s.elem, new_type_names, is_remote, generics_skip_remote);
+            let new_type = parse_type_to_redefined(&s.elem, new_type_names, generics_skip_remote, use_default_fields);
             slice.elem = Box::new(new_type);
             Type::Slice(slice)
         }
@@ -142,7 +153,7 @@ pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &HashMap<Ident, 
                                 } else {
                                     seg.ident = target.clone()
                                 }
-                            } else if is_remote {
+                            } else if use_default_fields {
                                 if !is_simple_primitive(&seg.ident.to_string()) && !generics_skip_remote.contains(&seg.ident) {
                                     seg.ident = Ident::new(&format!("{}Redefined", seg.ident), seg.span())
                                 }
@@ -150,13 +161,15 @@ pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &HashMap<Ident, 
                         }
 
                         syn::PathArguments::AngleBracketed(a) => a.args.iter_mut().for_each(|arg| match arg {
-                            syn::GenericArgument::Type(t) => *t = parse_type_to_redefined(&t, new_type_names, is_remote, generics_skip_remote),
+                            syn::GenericArgument::Type(t) => {
+                                *t = parse_type_to_redefined(&t, new_type_names, generics_skip_remote, use_default_fields)
+                            }
                             _ => (),
                         }),
                         syn::PathArguments::Parenthesized(p) => p
                             .inputs
                             .iter_mut()
-                            .for_each(|t| *t = parse_type_to_redefined(&t, new_type_names, is_remote, generics_skip_remote)),
+                            .for_each(|t| *t = parse_type_to_redefined(&t, new_type_names, generics_skip_remote, use_default_fields)),
                     }
                 }
             });
