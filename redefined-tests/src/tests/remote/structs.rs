@@ -8,7 +8,7 @@ mod crates_io {
 
     use super::*;
 
-    redefined_remote!(Uint : "ruint");
+    redefined_remote!([Uint] : "ruint");
 
     struct_test!((UintRedefined, 256, 4), Uint, { Uint::from_limbs([100; 4]) });
 }
@@ -16,15 +16,15 @@ mod crates_io {
 mod github {
     use super::*;
 
-    redefined_remote!(BasicStruct : "redefined-test-types");
+    redefined_remote!([BasicStruct] : "redefined-test-types");
 
-    redefined_remote!(GenericTypeStruct : "redefined-test-types");
+    redefined_remote!([GenericTypeStruct] : "redefined-test-types");
 
-    redefined_remote!(GenericConstantStruct : "redefined-test-types");
+    redefined_remote!([GenericConstantStruct] : "redefined-test-types");
 
-    redefined_remote!(GenericLifetimeStruct : "redefined-test-types");
+    redefined_remote!([GenericLifetimeStruct] : "redefined-test-types");
 
-    redefined_remote!(ComplexStructA : "redefined-test-types");
+    redefined_remote!([ComplexStructA] : "redefined-test-types");
 
     struct_test!(BasicStructRedefined, BasicStruct);
     struct_test!((GenericTypeStructRedefined, String, u64), GenericTypeStruct);
@@ -42,7 +42,7 @@ mod derives {
 
     use super::*;
 
-    redefined_remote!(#[derive(Serialize, Deserialize)] BasicStruct : "redefined-test-types");
+    redefined_remote!(#[derive(Serialize, Deserialize)] [BasicStruct] : "redefined-test-types");
 
     #[test]
     fn test_derive() {
@@ -69,7 +69,7 @@ mod lol {
     // Uint
     redefined_remote!(
         #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, rkyvSerialize, rkyvDeserialize, rkyvArchive)]
-        Uint : "ruint"
+        [Uint] : "ruint"
     );
 
     impl<const BITS: usize, const LIMBS: usize> Default for UintRedefined<BITS, LIMBS> {
@@ -102,7 +102,7 @@ mod lol {
             rkyvDeserialize,
             rkyvArchive,
         )]
-        FixedBytes : "alloy-primitives"
+        [FixedBytes] : "alloy-primitives"
     );
 
     pub type TxHashRedefined = FixedBytesRedefined<32>;

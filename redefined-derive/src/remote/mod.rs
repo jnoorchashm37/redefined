@@ -10,14 +10,13 @@ use self::{package::Package, types::write_to_file_cache};
 use crate::derive;
 
 pub fn expand_redefined_remote(input: TokenStream) -> syn::Result<TokenStream> {
-    let parsed: RemoteType = syn::parse2(input)?;
+    let parsed: RemoteTypes = syn::parse2(input)?;
 
     parsed.execute()
 }
 
 #[derive(Debug, Clone)]
 pub struct RemoteType {
-    pub name:        Ident,
     pub package:     Package,
     pub derives:     Vec<Ident>,
     pub other_attrs: TokenStream,
@@ -27,20 +26,20 @@ pub struct RemoteType {
 impl RemoteType {
     /// runs the remote type execution
     /// added for future use in fields of structs
-    pub fn execute(self) -> syn::Result<TokenStream> {
+    pub fn execute(&self, name: &Ident) -> syn::Result<TokenStream> {
         let remote_type_text = self
             .package
-            .fetch_from_file_cache(&self.name.to_string())
+            .fetch_from_file_cache(&name.to_string())
             .type_text;
 
-        let tokens = self.parse_remote_type_text(&remote_type_text);
+        let tokens = self.parse_remote_type_text(&remote_type_text, name);
 
         tokens
     }
 
     /// parses the remote type into tokens
-    fn parse_remote_type_text(&self, remote_type_text: &str) -> syn::Result<TokenStream> {
-        let remote_type_name = self.name.to_string();
+    fn parse_remote_type_text(&self, remote_type_text: &str, name: &Ident) -> syn::Result<TokenStream> {
+        let remote_type_name = name.to_string();
         let (other_attr, derives) = (&self.other_attrs, &self.derives);
         let tokens = if self.no_impl {
             let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
@@ -97,7 +96,27 @@ impl RemoteType {
     }
 }
 
-impl Parse for RemoteType {
+#[derive(Debug, Clone)]
+pub struct RemoteTypes {
+    pub names:       Vec<Ident>,
+    pub remote_type: RemoteType,
+}
+
+impl RemoteTypes {
+    /// runs the remote type execution
+    /// added for future use in fields of structs
+    pub fn execute(&self) -> syn::Result<TokenStream> {
+        let tokens = self
+            .names
+            .iter()
+            .map(|name| self.remote_type.execute(name))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(quote!( #(#tokens)*))
+    }
+}
+
+impl Parse for RemoteTypes {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let mut derives = vec![Ident::new("Redefined", input.span())];
         if input.peek(Token![#]) {
@@ -120,10 +139,10 @@ impl Parse for RemoteType {
 
         let mut other_attrs = Default::default();
         while input.peek(Token![#]) {
-            let hash_idnt = input.parse::<Token![#]>()?;
+            input.parse::<Token![#]>()?;
 
             let bracketed_derive;
-            let bracket = bracketed!(bracketed_derive in input);
+            bracketed!(bracketed_derive in input);
             let attr: TokenStream = bracketed_derive.parse()?;
 
             other_attrs = quote! {
@@ -132,9 +151,13 @@ impl Parse for RemoteType {
             };
         }
 
-        let name: Ident = input
-            .parse()
-            .map_err(|e| syn::Error::new(e.span(), "Failed to parse name of remote type"))?;
+        let names_content;
+        bracketed!(names_content in input);
+
+        let names = names_content
+            .parse_terminated(Ident::parse, Token![,])?
+            .into_iter()
+            .collect::<Vec<_>>();
 
         input.parse::<Token![:]>()?;
 
@@ -158,7 +181,9 @@ impl Parse for RemoteType {
             }
         }
 
-        let this = Self { name, package, derives, no_impl, other_attrs };
+        let remote_type = RemoteType { package, derives, other_attrs, no_impl };
+
+        let this = Self { names, remote_type };
 
         //panic!("NO IMPL: \n{:?}", this);
 
