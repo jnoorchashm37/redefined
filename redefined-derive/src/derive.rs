@@ -10,7 +10,10 @@ pub fn expand_derive_redefined(input: &DeriveInput, is_remote: bool) -> syn::Res
         parse_type_without_source(outer, input, is_remote)?
     } else {
         let container = RedefinedContainer::parse_sub_containers(outer, &input.data, &input.generics)?;
-        container.finalize()
+        let tokens = container.finalize();
+
+        // panic!("NEW TYPE: \n{}", tokens.to_string());
+        tokens
     };
 
     Ok(derive_tokens)

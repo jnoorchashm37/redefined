@@ -18,14 +18,14 @@ pub fn parse_type_without_source(outer: OuterContainer, input: &DeriveInput, is_
             .iter_mut()
             .for_each(|param| match param {
                 syn::GenericParam::Type(path) => {
-                    // if let Some(default_val) = path.default.as_mut() {
-                    //     *default_val = parse_type_to_redefined(default_val, &Default::default(),
-                    // Default::default()) }
-
-                    if path.default.is_some() {
-                        path.default = None;
-                        path.eq_token = None;
+                    if let Some(default_val) = path.default.as_mut() {
+                        *default_val = parse_type_to_redefined(default_val, &Default::default(), Default::default())
                     }
+
+                    // if path.default.is_some() {
+                    //     path.default = None;
+                    //     path.eq_token = None;
+                    // }
                 }
                 _ => (),
             });
