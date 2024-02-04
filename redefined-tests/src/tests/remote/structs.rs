@@ -180,6 +180,6 @@ mod lol {
     );
 
     fn t() {
-        //let t: ArchivedPairRedefined = ArchivedPairRedefined::hash();
+        let t: LogRedefined<LogDataRedefined>;
     }
 }
