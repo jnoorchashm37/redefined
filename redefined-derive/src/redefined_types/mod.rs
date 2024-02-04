@@ -13,19 +13,19 @@ use crate::{
     redefined_types::{r#enum::EnumContainer, r#struct::StructContainer},
 };
 
-pub struct RedefinedContainer<'a> {
+pub struct RedefinedContainer {
     source_type:            Ident,
     target_type:            Ident,
     source_generics_tokens: TokenStream,
-    target_generics:        TypeGenerics<'a>,
+    target_generics:        TokenStream,
     impl_generics_tokens:   TokenStream,
     where_clause:           Option<TokenStream>,
     to_source_tokens:       TokenStream,
     from_source_tokens:     TokenStream,
 }
 
-impl<'a> RedefinedContainer<'a> {
-    pub fn parse_sub_containers(outer: OuterContainer, input_data: &'a Data, input_generics: &'a Generics) -> syn::Result<Self> {
+impl RedefinedContainer {
+    pub fn parse_sub_containers(outer: OuterContainer, input_data: &Data, input_generics: &Generics) -> syn::Result<Self> {
         let source_type = outer.source_type.clone().unwrap();
 
         let (mut to_source_tokens, mut from_source_tokens) = if outer.should_parse_fields() {
@@ -49,12 +49,20 @@ impl<'a> RedefinedContainer<'a> {
 
         let (target_generics, source_generics_tokens, impl_generics_tokens, where_clause) = if input_generics.type_params().count() == 0 {
             let (impl_generics, ty_generics, _) = input_generics.split_for_impl();
-            (ty_generics.clone(), quote!(#ty_generics), impl_generics.to_token_stream(), None)
+            (quote!(#ty_generics), quote!(#ty_generics), impl_generics.to_token_stream(), None)
         } else {
             let (_, ty_generics, _) = input_generics.split_for_impl();
-            let (modded_generics, source_generics, where_clause) = build_generics_with_where_clause(input_generics.clone())?;
+            let (modded_generics, checked_ty_generics, source_generics, where_clause) = build_generics_with_where_clause(input_generics.clone())?;
             let (combined_impl_generics, ..) = modded_generics.split_for_impl();
-            (ty_generics, quote!(<#(#source_generics,)*>), combined_impl_generics.to_token_stream(), Some(where_clause))
+
+            let source_generics = if source_generics.is_empty() { quote!() } else { quote!(<#(#source_generics,)*>) };
+            let checked_ty_generics = if checked_ty_generics.is_empty() { quote!() } else { quote!(#ty_generics) };
+
+            if source_generics.is_empty() && checked_ty_generics.is_empty() {
+                (checked_ty_generics, source_generics, quote!(), None)
+            } else {
+                (checked_ty_generics, source_generics, combined_impl_generics.to_token_stream(), Some(where_clause))
+            }
         };
 
         #[cfg(feature = "unsafe")]
@@ -95,7 +103,7 @@ impl<'a> RedefinedContainer<'a> {
             from_source_tokens,
         } = self;
 
-        quote! {
+        let t = quote! {
              impl #impl_generics_tokens redefined::RedefinedConvert<#source_type #source_generics_tokens> for #target_type #target_generics
              #where_clause
                  {
@@ -124,7 +132,10 @@ impl<'a> RedefinedContainer<'a> {
                     }
                 }
 
-        }
+        };
+
+        // panic!("WEE: {}", t.to_string());
+        t
     }
 }
 
@@ -150,7 +161,7 @@ impl TraitContainer {
     }
 }
 
-pub fn build_generics_with_where_clause(ty_generics: Generics) -> syn::Result<(Generics, Vec<GenericParam>, TokenStream)> {
+pub fn build_generics_with_where_clause(ty_generics: Generics) -> syn::Result<(Generics, Vec<GenericParam>, Vec<GenericParam>, TokenStream)> {
     let source_generics = ty_generics
         .params
         .iter()
@@ -166,6 +177,21 @@ pub fn build_generics_with_where_clause(ty_generics: Generics) -> syn::Result<(G
             }
 
             Some(source_generic)
+        })
+        .collect::<Vec<_>>();
+
+    let check_ty_generics = ty_generics
+        .params
+        .iter()
+        .filter_map(|target_generic| {
+            let target_generic = target_generic.clone();
+            if let GenericParam::Type(ref s) = target_generic {
+                if s.default.is_some() {
+                    return None;
+                }
+            }
+
+            Some(target_generic)
         })
         .collect::<Vec<_>>();
 
@@ -195,5 +221,5 @@ pub fn build_generics_with_where_clause(ty_generics: Generics) -> syn::Result<(G
     let mut target_generics = ty_generics.clone();
     target_generics.params.extend(source_generics.clone());
 
-    Ok((target_generics, source_generics, where_clause))
+    Ok((target_generics, check_ty_generics, source_generics, where_clause))
 }
