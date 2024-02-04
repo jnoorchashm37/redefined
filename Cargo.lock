@@ -1498,7 +1498,7 @@ version = "0.1.0"
 [[package]]
 name = "redefined-test-types"
 version = "0.1.0"
-source = "git+https://github.com/0xlagrange/redefined?branch=remote#2d77de56cc659341407d9eacfc4deeee4870910a"
+source = "git+https://github.com/SorellaLabs/redefined?branch=remote#2d77de56cc659341407d9eacfc4deeee4870910a"
 
 [[package]]
 name = "redefined-tests"
@@ -1511,7 +1511,7 @@ dependencies = [
  "paste",
  "quote",
  "redefined",
- "redefined-test-types 0.1.0 (git+https://github.com/0xlagrange/redefined?branch=remote)",
+ "redefined-test-types 0.1.0 (git+https://github.com/SorellaLabs/redefined?branch=remote)",
  "rkyv",
  "ruint",
  "serde",

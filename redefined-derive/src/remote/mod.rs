@@ -20,6 +20,7 @@ pub struct RemoteType {
     pub package:     Package,
     pub derives:     Vec<Ident>,
     pub other_attrs: TokenStream,
+    pub transmute:   bool,
     pub no_impl:     bool,
 }
 
@@ -85,13 +86,23 @@ impl RemoteType {
             // let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
 
             let remote_type = Ident::new(&remote_type_name, struct_def.span());
-            quote! {
 
-                #[derive(#(#derives),*)]
-                #[redefined(#remote_type)]
-                #[redefined_attr(transmute)]
-                #other_attr
-                #final_struct_def
+            if self.transmute {
+                quote! {
+
+                    #[derive(#(#derives),*)]
+                    #[redefined(#remote_type)]
+                    #[redefined_attr(transmute)]
+                    #other_attr
+                    #final_struct_def
+                }
+            } else {
+                quote! {
+                    #[derive(#(#derives),*)]
+                    #[redefined(#remote_type)]
+                    #other_attr
+                    #final_struct_def
+                }
             }
         };
 
@@ -143,12 +154,22 @@ impl Parse for RemoteTypes {
         }
 
         let mut other_attrs = Default::default();
+        let (mut from_source, mut to_source) = (false, false);
         while input.peek(Token![#]) {
             input.parse::<Token![#]>()?;
 
             let bracketed_derive;
             bracketed!(bracketed_derive in input);
             let attr: TokenStream = bracketed_derive.parse()?;
+
+            let str_attr = attr.to_string();
+            if str_attr.contains("to_source =") {
+                to_source = true
+            }
+
+            if str_attr.contains("from_source =") {
+                from_source = true
+            }
 
             other_attrs = quote! {
                 #other_attrs
@@ -186,7 +207,7 @@ impl Parse for RemoteTypes {
             }
         }
 
-        let remote_type = RemoteType { package, derives, other_attrs, no_impl };
+        let remote_type = RemoteType { package, derives, other_attrs, no_impl, transmute: !(from_source && to_source) };
 
         let this = Self { names, remote_type };
 

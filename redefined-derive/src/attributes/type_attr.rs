@@ -15,6 +15,12 @@ pub struct TypeAttribute {
     pub list_other_attrs:  Option<Vec<TokenStream>>,
 }
 
+impl PartialEq for TypeAttribute {
+    fn eq(&self, other: &Self) -> bool {
+        self.symbol == other.symbol
+    }
+}
+
 impl Debug for TypeAttribute {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TypeAttribute")

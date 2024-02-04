@@ -7,7 +7,8 @@ use syn::{self, parse::Parse, spanned::Spanned, Attribute, DataStruct, Field, Fi
 use super::parse_attributes;
 use crate::attributes::{
     primitives::is_simple_primitive,
-    symbol::{USE_FIELD, USE_SAME_FIELD, USE_SAME_FIELDS},
+    symbol::{FIELD_FN, FROM_SOURCE_FN, USE_FIELD, USE_SAME_FIELD, USE_SAME_FIELDS},
+    type_attr::TypeAttribute,
     ContainerAttributes,
 };
 
@@ -69,7 +70,19 @@ pub fn parse_field(field: &Field, generics_skip_remote: &[Ident]) -> syn::Result
 
     for attr in &field.attrs {
         if attr.path().is_ident("redefined") {
-            field_attrs = attr.parse_args_with(ContainerAttributes::parse)?.0;
+            let redefined_attr = attr.parse_args_with(ContainerAttributes::parse)?.0;
+            let d = TypeAttribute {
+                symbol:            FIELD_FN,
+                nv_tokens:         None,
+                list_idents:       None,
+                list_tuple_idents: None,
+                list_other_attrs:  None,
+            };
+            if redefined_attr.contains(&d) {
+                copied_field_attrs.push(attr);
+            }
+
+            field_attrs = redefined_attr;
         } else {
             copied_field_attrs.push(attr)
         }

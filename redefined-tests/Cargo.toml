@@ -15,7 +15,7 @@ redefined = { path = "../redefined" }
 
 [dev-dependencies]
 # remote github
-redefined-test-types = { git = "https://github.com/0xlagrange/redefined", branch = "remote" }
+redefined-test-types = { git = "https://github.com/SorellaLabs/redefined", branch = "remote" }
 
 # remote crate-io
 ruint = "1.11.1"
@@ -31,7 +31,7 @@ quote = "1.0.35"
 
 rkyv = { version = "0.7", features = ["validation"] }
 malachite = "0.4.0"
-alloy-primitives = { version = "0.6.0", features = ["rlp"] }
+alloy-primitives = { version = "0.6.0", no-default-features = true  }
 derive_more = "0.99.17"
 bytes = "1.5"
 
