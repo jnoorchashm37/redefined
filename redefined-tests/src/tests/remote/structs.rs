@@ -62,7 +62,7 @@ mod lol {
     use malachite::{platform_64::Limb, Natural, Rational};
     use redefined::{redefined_remote, Redefined, RedefinedConvert};
     use rkyv::{Archive as rkyvArchive, Archive, Deserialize as rDeserialize, Serialize as rSerialize};
-    use serde::{Deserialize as serdeDeserialize, Deserialize, Deserializer, Serialize as serdeSerialize, Serialize, Serializer};
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     use super::*;
 
@@ -71,16 +71,6 @@ mod lol {
         #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, rSerialize, rDeserialize, Archive)]
         [Uint] : "ruint"
     );
-
-    impl<const BITS: usize, const LIMBS: usize> Serialize for UintRedefined<BITS, LIMBS> {
-        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
-        {
-            let this: Uint<BITS, LIMBS> = (*self).into();
-            this.serialize(serializer)
-        }
-    }
 
     pub type U256Redefined = UintRedefined<256, 4>;
     pub type U64Redefined = UintRedefined<64, 1>;
@@ -122,16 +112,6 @@ mod lol {
         }
     }
 
-    impl<'de, const N: usize> Deserialize<'de> for FixedBytesRedefined<N> {
-        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: Deserializer<'de>,
-        {
-            let this: FixedBytes<N> = Deserialize::deserialize(deserializer)?;
-            Ok(this.into())
-        }
-    }
-
     impl<const N: usize> Hash for ArchivedFixedBytesRedefined<N> {
         fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
             self.0.hash(state);
@@ -161,7 +141,6 @@ mod lol {
         DerefMut,
         From,
         Serialize,
-        Deserialize,
         Index,
         IndexMut,
         IntoIterator,
@@ -191,11 +170,16 @@ mod lol {
     pub struct BytesRedefined(pub Vec<u8>);
 
     redefined_remote!(
-        #[derives(Debug, PartialEq, Clone, Serialize, rSerialize, rDeserialize, Archive)]
-        [Log, LogData] : "alloy-primitives"
+        #[derive(Debug, PartialEq, Clone, Serialize, rSerialize, rDeserialize, Archive)]
+        [Log] : "alloy-primitives"
+    );
+
+    redefined_remote!(
+        #[derive(Debug, PartialEq, Clone, Serialize, rSerialize, rDeserialize, Archive)]
+        [LogData] : "alloy-primitives"
     );
 
     fn t() {
-        // let t: ArchivedPairRedefined = ArchivedPairRedefined::hash();
+        //let t: ArchivedPairRedefined = ArchivedPairRedefined::hash();
     }
 }

@@ -39,6 +39,8 @@ impl RemoteType {
 
     /// parses the remote type into tokens
     fn parse_remote_type_text(&self, remote_type_text: &str, name: &Ident) -> syn::Result<TokenStream> {
+        //let remote_type_text = remote_type_text.replace("\\", "");
+
         let remote_type_name = name.to_string();
         let (other_attr, derives) = (&self.other_attrs, &self.derives);
         let tokens = if self.no_impl {
@@ -54,10 +56,11 @@ impl RemoteType {
 
             let mut derives = derives.clone();
             derives.retain(|d| d.to_string() != "Redefined");
+
             quote! {
-            #[derive(#(#derives),*)]
-            #other_attr
-            #final_struct_def
+                #[derive(#(#derives),*)]
+                #other_attr
+                #final_struct_def
             }
         } else {
             // let remote_type_text = remote_type_text
@@ -77,7 +80,7 @@ impl RemoteType {
 
             let final_struct_def: DeriveInput = syn::parse_str(&mod_redefined_struct_def)?;
 
-            //panic!("DEF: \n{:?}", final_struct_def.to_token_stream().to_string());
+            //panic!("DEF: \n{}", final_struct_def.to_token_stream().to_string());
 
             // let struct_def: DeriveInput = syn::parse_str(&remote_type_text)?;
 
@@ -91,6 +94,8 @@ impl RemoteType {
                 #final_struct_def
             }
         };
+
+        //panic!("DEF: \n{}", tokens.to_string());
 
         Ok(tokens)
     }
