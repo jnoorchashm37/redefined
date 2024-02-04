@@ -32,7 +32,7 @@ pub fn parse_new_enum(
         }
     };
 
-    panic!("TOKENS: {:?}", tokens.to_string());
+    //panic!("TOKENS: {:?}", tokens.to_string());
 
     Ok(tokens)
 }
