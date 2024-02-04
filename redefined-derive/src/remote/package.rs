@@ -1,3 +1,4 @@
+use core::panic;
 use std::{
     fs::DirEntry,
     io::{BufRead, Read},
@@ -151,20 +152,22 @@ impl PackageKind {
             .collect::<Result<Vec<_>, _>>()
             .expect(&format!("Coult not read subdirectories for: {:?}", cargo_dir_path));
 
-        let dir_value = all_dirs
-            .first()
-            .expect(&format!("No subdirectories for: {:?}", cargo_dir_path));
-        let crates_io_path = dir_value.path();
+        if all_dirs.is_empty() {
+            panic!("{}", format!("No subdirectories for: {:?}", cargo_dir_path));
+        }
 
-        let project_crate = std::fs::read_dir(&crates_io_path)
-            .expect(&format!("Could not read cargo crates-io dir for {:?}", crates_io_path))
-            .collect::<Result<Vec<_>, _>>()
-            .expect(&format!("Coult not read subdirectories for: {:?}", crates_io_path))
+        all_dirs
             .into_iter()
+            .map(|dir| dir.path())
+            .flat_map(|crates_io_path| {
+                std::fs::read_dir(&crates_io_path)
+                    .expect(&format!("Could not read cargo crates-io dir for {:?}", crates_io_path))
+                    .collect::<Result<Vec<_>, _>>()
+                    .expect(&format!("Coult not read subdirectories for: {:?}", crates_io_path))
+                    .into_iter()
+            })
             .find(|c| c.path().is_dir() && c.file_name().to_str().unwrap() == &format!("{package_name}-{version}"))
-            .expect(&format!("Could not find crates-io package with name: {package_name}-{version}"));
-
-        project_crate
+            .expect(&format!("Could not find crates-io package with name: {package_name}-{version}"))
     }
 
     fn fetch_from_cargo_git(&self) -> DirEntry {
