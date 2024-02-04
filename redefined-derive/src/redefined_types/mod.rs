@@ -96,9 +96,6 @@ impl<'a> RedefinedContainer<'a> {
         } = self;
 
         quote! {
-
-
-
              impl #impl_generics_tokens redefined::RedefinedConvert<#source_type #source_generics_tokens> for #target_type #target_generics
              #where_clause
                  {

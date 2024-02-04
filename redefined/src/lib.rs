@@ -97,7 +97,7 @@ macro_rules! self_convert_redefined_with_fixed_size_array {
 macro_rules! self_convert_redefined {
     ($($val:ident),*) => {
         $(
-            impl RedefinedConvert<$val> for $val {
+            impl redefined::RedefinedConvert<$val> for $val {
                 fn from_source(item: $val) -> Self {
                     item
                 }
