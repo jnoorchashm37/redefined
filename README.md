@@ -1,5 +1,6 @@
-# Redefined
-Need to do docs here too
+# Redefined (WIP)
+
+Workaround the orphan rule without having to manually redefine types.
 
 --
 
