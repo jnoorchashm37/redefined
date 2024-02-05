@@ -1,4 +1,4 @@
-use redefined::{Redefined, RedefinedConvert};
+use redefined::Redefined;
 use redefined_test_types::structs::PrivateFieldStruct;
 
 /*

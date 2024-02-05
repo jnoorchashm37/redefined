@@ -1,13 +1,13 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
+use quote::quote;
 use syn::{self, parse::Parse, spanned::Spanned, Attribute, DataStruct, Field, Fields, Generics, Ident, Type, Visibility};
 
 use super::parse_attributes;
 use crate::attributes::{
     primitives::is_simple_primitive,
-    symbol::{FIELD_FN, FROM_SOURCE_FN, USE_FIELD, USE_SAME_FIELD, USE_SAME_FIELDS},
+    symbol::{FIELD_FN, USE_FIELD, USE_SAME_FIELD, USE_SAME_FIELDS},
     type_attr::TypeAttribute,
     ContainerAttributes,
 };
@@ -188,7 +188,7 @@ pub fn parse_type_to_redefined(src_type: &Type, new_type_names: &HashMap<Ident, 
         Type::Never(_) => panic!("FIELD IS OF TYPE: Never"),
         Type::Paren(_) => panic!("FIELD IS OF TYPE: Paren"),
         Type::Ptr(_) => panic!("FIELD IS OF TYPE: Ptr"),
-        Type::TraitObject(t) => panic!("FIELD IS OF TYPE: TraitObject"),
+        Type::TraitObject(_) => panic!("FIELD IS OF TYPE: TraitObject"),
         Type::Verbatim(_) => panic!("FIELD IS OF TYPE: Verbatim"),
         _ => panic!("FIELD IS OF TYPE: _"),
     }

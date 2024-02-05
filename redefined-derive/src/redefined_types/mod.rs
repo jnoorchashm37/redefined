@@ -3,7 +3,7 @@ pub mod r#struct;
 
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
-use syn::{self, spanned::Spanned, Data, DataEnum, DataStruct, GenericParam, Generics, Ident, TypeGenerics};
+use syn::{self, spanned::Spanned, Data, DataEnum, DataStruct, GenericParam, Generics, Ident};
 
 #[cfg(feature = "unsafe")]
 use crate::attributes::symbol::TRANSMUTE;

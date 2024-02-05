@@ -2,7 +2,7 @@ pub mod r#enum;
 pub mod r#struct;
 
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::{quote, ToTokens};
+use quote::quote;
 use syn::{parse::Parse, Attribute, Data, DeriveInput};
 
 use self::{r#enum::parse_new_enum, r#struct::parse_new_struct};

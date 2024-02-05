@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
-use syn::{self, bracketed, parenthesized, parse::Parse, parse_quote, Expr, Ident, LitStr, Token, TypeTuple};
+use syn::{self, parenthesized, parse::Parse, parse_quote, Expr, Ident, LitStr, Token, TypeTuple};
 
 use super::symbol::*;
 

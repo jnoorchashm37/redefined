@@ -3,10 +3,10 @@ mod package;
 mod types;
 
 use proc_macro2::{Ident, TokenStream};
-use quote::{quote, ToTokens};
+use quote::quote;
 use syn::{bracketed, parenthesized, parse::Parse, spanned::Spanned, DeriveInput, LitStr, Token};
 
-use self::{package::Package, types::write_to_file_cache};
+use self::package::Package;
 use crate::derive;
 
 pub fn expand_redefined_remote(input: TokenStream) -> syn::Result<TokenStream> {

@@ -1,4 +1,4 @@
-use std::{fs::DirEntry, io::Write, path::PathBuf};
+use std::{fs::DirEntry, path::PathBuf};
 
 use serde::Deserialize;
 
@@ -75,13 +75,6 @@ impl StructOrEnum {
             panic!("Expected 'Struct' or 'Enum'")
         }
     }
-}
-
-pub fn write_to_file_cache(path: &str, text: &str) {
-    let mut file = std::fs::File::create(path).expect(&format!("Failed to open file in file cache: {}", path));
-
-    file.write_all(text.as_bytes())
-        .expect(&format!("Failed to write file in file cache: {}", path));
 }
 
 pub fn get_all_files(dir: &DirEntry, paths: &mut Vec<PathBuf>) {
