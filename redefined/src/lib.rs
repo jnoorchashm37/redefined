@@ -1,7 +1,10 @@
 #![feature(trivial_bounds)]
 #![allow(trivial_bounds)]
 
-use std::{collections::HashMap, hash::Hash};
+use std::{
+    collections::HashMap,
+    hash::{BuildHasher, Hash},
+};
 
 pub use redefined_derive::{redefined_remote, Redefined};
 
@@ -54,20 +57,21 @@ where
     }
 }
 
-impl<X, Y, W, Z> RedefinedConvert<HashMap<W, Z>> for HashMap<X, Y>
+impl<X, Y, W, Z, S> RedefinedConvert<HashMap<W, Z, S>> for HashMap<X, Y, S>
 where
     X: RedefinedConvert<W>,
     Y: RedefinedConvert<Z>,
     X: Hash + Eq,
     W: Hash + Eq,
+    S: BuildHasher + Default,
 {
-    fn from_source(item: HashMap<W, Z>) -> Self {
+    fn from_source(item: HashMap<W, Z, S>) -> Self {
         item.into_iter()
             .map(|(a, b)| (X::from_source(a), Y::from_source(b)))
             .collect()
     }
 
-    fn to_source(self) -> HashMap<W, Z> {
+    fn to_source(self) -> HashMap<W, Z, S> {
         self.into_iter()
             .map(|(a, b)| (a.to_source(), b.to_source()))
             .collect()
