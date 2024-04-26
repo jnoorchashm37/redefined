@@ -25,7 +25,7 @@ mod remote;
 ///       from)
 ///
 /// ### Example:
-/// ```
+/// ```ignore
 ///     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
 ///     #[redefined(BasicStruct)]
 ///     pub struct BasicStructA {
@@ -47,7 +47,7 @@ mod remote;
 ///
 ///
 /// ### Example:
-/// ```
+/// ```ignore
 ///     #[derive(Debug, Clone, PartialEq, Redefined)]
 ///     pub struct GenericConstantStructA<const XVAL: usize> {
 ///         pub p: u64,
@@ -83,7 +83,7 @@ mod remote;
 ///
 /// ### Examples:
 /// `to_source = '..'` + `from_source = '..'`
-/// ```
+/// ```ignore
 ///     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
 ///     #[redefined(PrivateFieldStruct)]
 ///     #[redefined_attr(
@@ -98,7 +98,7 @@ mod remote;
 /// ```
 ///
 /// `transmute`
-/// ```
+/// ```ignore
 ///     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
 ///     #[redefined(BasicStruct)]
 ///     #[redefined_attr(transmute)]
@@ -110,7 +110,7 @@ mod remote;
 /// ```
 ///
 /// `derive`
-/// ```
+/// ```ignore
 ///     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
 ///     #[redefined_attr(derive(Debug, Clone, PartialEq, Default))]
 ///     pub struct BasicStructA {
@@ -138,8 +138,7 @@ mod remote;
 ///     - syntax: comma seperated list of `(<SOURCE TYPE>, <TARGET TYPE>)`
 ///     - NOTE: only used when the container attribute `redefined(...)` is
 ///       omitted
-///     - **Sub-attributes**:
-///         1) `field((<SOURCE TYPE>, same))`
+///     - **Sub-attributes**: 1) `field((<SOURCE TYPE>, same))`
 ///             - `same` can be used in place of the target type, when the
 ///               target type's identifier is the same as the source types
 ///         2) `field((<SOURCE TYPE>, <TARGET TYPE>))`
@@ -157,7 +156,7 @@ mod remote;
 /// #Examples:
 ///
 /// `func = '..'`
-/// ```
+/// ```ignore
 ///     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
 ///     #[redefined(PrivateFieldStruct)]
 ///     #[redefined_attr(to_source = "PrivateFieldStruct::new(self.p, self.d, self.vals)")]     
@@ -170,7 +169,7 @@ mod remote;
 /// ```
 ///
 /// `field((.., ..))` + `field((.., same))`
-/// ```
+/// ```ignore
 ///     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
 ///     #[redefined_attr(derive(Debug, Clone, PartialEq))]
 ///     pub struct ComplexStructAA<'a, 'b> {
@@ -186,7 +185,7 @@ mod remote;
 ///
 ///
 /// /// `same_fields`
-/// ```
+/// ```ignore
 ///     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
 ///     #[redefined_attr(derive(Debug, Clone, PartialEq))]
 ///     pub struct ComplexStructAA<'a, 'b> {
@@ -237,7 +236,7 @@ pub fn derive_redefined(input: TokenStream) -> TokenStream {
 /// -----
 /// ### Example
 ///
-/// ```
+/// ```ignore
 ///     use ruint::Uint;
 ///
 ///    redefined_remote!([Uint] : "ruint");
