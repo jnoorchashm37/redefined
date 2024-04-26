@@ -69,12 +69,12 @@ impl RedefinedContainer {
         if outer.get_symbol(TRANSMUTE).is_some() {
             from_source_tokens = quote! {
                let s = unsafe { std::mem::transmute_copy::<#source_type #source_generics_tokens, Self>(&src) };
-               std::mem::forget(src);
+               // std::mem::forget(src);
                s
             };
             to_source_tokens = quote! {
                 let s = unsafe { std::mem::transmute_copy::<Self, #source_type #source_generics_tokens>(&self) };
-                std::mem::forget(self);
+                // std::mem::forget(self);
                 s
             };
         }
@@ -171,7 +171,7 @@ pub fn build_generics_with_where_clause(ty_generics: Generics) -> syn::Result<(G
                 if s.default.is_some() {
                     s.default = None;
                     s.eq_token = None;
-                    return None;
+                    return None
                 }
                 s.ident = Ident::new(&format!("{}R", s.ident), target_generic.span());
             }
@@ -187,7 +187,7 @@ pub fn build_generics_with_where_clause(ty_generics: Generics) -> syn::Result<(G
             let target_generic = target_generic.clone();
             if let GenericParam::Type(ref s) = target_generic {
                 if s.default.is_some() {
-                    return None;
+                    return None
                 }
             }
 
