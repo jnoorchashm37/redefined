@@ -68,13 +68,13 @@ impl RedefinedContainer {
         #[cfg(feature = "unsafe")]
         if outer.get_symbol(TRANSMUTE).is_some() {
             from_source_tokens = quote! {
-               let s = unsafe { std::mem::transmute::<Self,Self>(std::mem::transmute_copy::<#source_type #source_generics_tokens, Self>(&src)) };
-               // std::mem::forget(src);
+               let s = unsafe { std::mem::transmute_copy::<#source_type #source_generics_tokens, Self>(&src) };
+               std::mem::forget(src);
                s
             };
             to_source_tokens = quote! {
-                let s = unsafe { std::mem::transmute::<#source_type #source_generics_tokens,#source_type #source_generics_tokens>(std::mem::transmute_copy::<Self, #source_type #source_generics_tokens>(&self)) };
-                // std::mem::forget(self);
+                let s = unsafe { std::mem::transmute_copy::<Self, #source_type #source_generics_tokens>(&self) };
+                std::mem::forget(self);
                 s
             };
         }
