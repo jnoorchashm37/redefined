@@ -68,13 +68,13 @@ impl RedefinedContainer {
         #[cfg(feature = "unsafe")]
         if outer.get_symbol(TRANSMUTE).is_some() {
             from_source_tokens = quote! {
-               let s = unsafe { std::mem::transmute_copy::<#source_type #source_generics_tokens, Self>(&src) };
-               std::mem::forget(src);
+               let s = unsafe { std::intrinsics::transmute_unchecked::<#source_type #source_generics_tokens, Self>(src) };
+               // std::mem::forget(src);
                s
             };
             to_source_tokens = quote! {
-                let s = unsafe { std::mem::transmute_copy::<Self, #source_type #source_generics_tokens>(&self) };
-                std::mem::forget(self);
+                let s = unsafe { std::intrinsics::transmute_unchecked::<Self, #source_type #source_generics_tokens>(self) };
+                // std::mem::forget(self);
                 s
             };
         }
@@ -107,10 +107,12 @@ impl RedefinedContainer {
              impl #impl_generics_tokens redefined::RedefinedConvert<#source_type #source_generics_tokens> for #target_type #target_generics
              #where_clause
                  {
+                    #[allow(internal_features)]
                      fn from_source(src: #source_type #source_generics_tokens) -> Self {
                             #from_source_tokens
                      }
 
+                    #[allow(internal_features)]
                      fn to_source(self) -> #source_type #source_generics_tokens {
                             #to_source_tokens
                      }
@@ -119,6 +121,7 @@ impl RedefinedContainer {
             impl #impl_generics_tokens From<#source_type #source_generics_tokens> for #target_type #target_generics
             #where_clause
                 {
+                    #[allow(internal_features)]
                     fn from(src: #source_type #source_generics_tokens) -> Self {
                         redefined::RedefinedConvert::from_source(src)
                     }
@@ -127,6 +130,7 @@ impl RedefinedContainer {
             impl #impl_generics_tokens Into<#source_type #source_generics_tokens> for #target_type #target_generics
             #where_clause
                 {
+                    #[allow(internal_features)]
                     fn into(self) -> #source_type #source_generics_tokens {
                         redefined::RedefinedConvert::to_source(self)
                     }

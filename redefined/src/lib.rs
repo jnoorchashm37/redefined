@@ -10,7 +10,7 @@ pub use redefined_derive::{redefined_remote, Redefined};
 
 pub trait RedefinedConvert<O>
 where
-    O: ?Sized,
+    O: Sized,
 {
     fn from_source(src: O) -> Self;
 
