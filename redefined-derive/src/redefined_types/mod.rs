@@ -69,12 +69,12 @@ impl RedefinedContainer {
         if outer.get_symbol(TRANSMUTE).is_some() {
             from_source_tokens = quote! {
                let s = unsafe { std::intrinsics::transmute_unchecked::<#source_type #source_generics_tokens, Self>(src) };
-               // std::mem::forget(src);
+
                s
             };
             to_source_tokens = quote! {
                 let s = unsafe { std::intrinsics::transmute_unchecked::<Self, #source_type #source_generics_tokens>(self) };
-                // std::mem::forget(self);
+
                 s
             };
         }
@@ -138,7 +138,6 @@ impl RedefinedContainer {
 
         };
 
-        // panic!("WEE: {}", t.to_string());
         t
     }
 }
