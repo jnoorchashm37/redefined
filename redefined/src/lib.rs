@@ -1,4 +1,4 @@
-#![feature(trivial_bounds)]
+// #![feature(trivial_bounds)]
 #![allow(trivial_bounds)]
 
 use std::{
