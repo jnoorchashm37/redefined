@@ -1,6 +1,6 @@
 #![allow(clippy::wrong_self_convention)]
 #![allow(non_upper_case_globals)]
-#![feature(core_intrinsics)]
+// #![feature(core_intrinsics)]
 
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput};
