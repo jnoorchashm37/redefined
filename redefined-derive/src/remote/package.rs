@@ -57,7 +57,7 @@ impl Package {
                             .trim_matches('\"')
                             .to_string(),
                         kind,
-                    })
+                    });
                 }
             }
         }

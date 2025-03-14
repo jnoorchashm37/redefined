@@ -29,7 +29,7 @@ impl ParsedRemoteType {
                 if let Some(delimeter) = struct_kind.closing_delimiter() {
                     closing_delimeter = delimeter;
                 } else {
-                    return Some(Self { url_or_path: url, type_text: struct_lines, kind })
+                    return Some(Self { url_or_path: url, type_text: struct_lines, kind });
                 }
             }
 
@@ -46,7 +46,7 @@ impl ParsedRemoteType {
                 struct_lines.push_str(line);
             }
 
-            return Some(Self { url_or_path: url, type_text: struct_lines, kind })
+            return Some(Self { url_or_path: url, type_text: struct_lines, kind });
         }
 
         None

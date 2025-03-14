@@ -14,14 +14,14 @@ use crate::{
 };
 
 pub struct RedefinedContainer {
-    source_type: Ident,
-    target_type: Ident,
+    source_type:            Ident,
+    target_type:            Ident,
     source_generics_tokens: TokenStream,
-    target_generics: TokenStream,
-    impl_generics_tokens: TokenStream,
-    where_clause: Option<TokenStream>,
-    to_source_tokens: TokenStream,
-    from_source_tokens: TokenStream,
+    target_generics:        TokenStream,
+    impl_generics_tokens:   TokenStream,
+    where_clause:           Option<TokenStream>,
+    to_source_tokens:       TokenStream,
+    from_source_tokens:     TokenStream,
 }
 
 impl RedefinedContainer {
@@ -68,17 +68,13 @@ impl RedefinedContainer {
         #[cfg(feature = "unsafe")]
         if outer.get_symbol(TRANSMUTE).is_some() {
             from_source_tokens = quote! {
-                // Optional: a *debug* check (runtime) that they're the same size:
                 debug_assert_eq!(
                     std::mem::size_of::<#source_type #source_generics_tokens>(),
                     std::mem::size_of::<Self>()
                 );
 
-                let s = unsafe {
-                    // Create uninitialized `Self`
+                unsafe {
                     let mut tmp: Self = std::mem::MaybeUninit::uninit().assume_init();
-
-                    // Copy bytes from `src` into `tmp`
                     std::ptr::copy_nonoverlapping(
                         &src as *const #source_type #source_generics_tokens as *const u8,
                         &mut tmp as *mut Self as *mut u8,
@@ -86,9 +82,7 @@ impl RedefinedContainer {
                     );
 
                     tmp
-                };
-
-                s
+                }
             };
 
             to_source_tokens = quote! {
@@ -97,7 +91,7 @@ impl RedefinedContainer {
                     std::mem::size_of::<#source_type #source_generics_tokens>()
                 );
 
-                let s = unsafe {
+                 unsafe {
                     let mut tmp: #source_type #source_generics_tokens
                         = std::mem::MaybeUninit::uninit().assume_init();
 
@@ -108,9 +102,9 @@ impl RedefinedContainer {
                     );
 
                     tmp
-                };
+                }
 
-                s
+
             };
         }
 
@@ -179,7 +173,7 @@ impl RedefinedContainer {
 
 pub struct TraitContainer {
     pub from_source: TokenStream,
-    pub to_source: TokenStream,
+    pub to_source:   TokenStream,
 }
 
 impl TraitContainer {
@@ -194,7 +188,7 @@ impl TraitContainer {
 
         Ok(Self {
             from_source: container.from_source_tokens(source_type, target_type)?,
-            to_source: container.to_source_tokens(source_type, target_type)?,
+            to_source:   container.to_source_tokens(source_type, target_type)?,
         })
     }
 }
