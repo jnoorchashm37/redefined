@@ -1,2 +1,2 @@
 //mod enums;
-mod structs;
+// mod structs;

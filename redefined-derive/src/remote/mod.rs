@@ -17,11 +17,11 @@ pub fn expand_redefined_remote(input: TokenStream) -> syn::Result<TokenStream> {
 
 #[derive(Debug, Clone)]
 pub struct RemoteType {
-    pub package:     Package,
-    pub derives:     Vec<Ident>,
+    pub package: Package,
+    pub derives: Vec<Ident>,
     pub other_attrs: TokenStream,
-    pub transmute:   bool,
-    pub no_impl:     bool,
+    pub transmute: bool,
+    pub no_impl: bool,
 }
 
 impl RemoteType {
@@ -114,7 +114,7 @@ impl RemoteType {
 
 #[derive(Debug, Clone)]
 pub struct RemoteTypes {
-    pub names:       Vec<Ident>,
+    pub names: Vec<Ident>,
     pub remote_type: RemoteType,
 }
 

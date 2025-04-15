@@ -19,8 +19,8 @@ mod derive_source {
     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
     #[redefined(GenericTypeStruct)]
     pub struct GenericTypeStructA<X, Y> {
-        pub p:    u64,
-        pub d:    X,
+        pub p: u64,
+        pub d: X,
         pub vals: Vec<Y>,
     }
 
@@ -50,7 +50,7 @@ mod derive_source {
     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
     #[redefined(ComplexStructA)]
     pub struct ComplexStructAA<'a, 'b> {
-        pub n:       i128,
+        pub n: i128,
         pub inner_a: GenericLifetimeStructA<'a, 'b>,
         pub inner_b: Vec<BasicStructA>,
     }
@@ -77,8 +77,8 @@ mod derive_no_source {
     /// struct with type generics
     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
     pub struct GenericTypeStructA<X, Y> {
-        pub p:    u64,
-        pub d:    X,
+        pub p: u64,
+        pub d: X,
         pub vals: Vec<Y>,
     }
 
@@ -119,7 +119,7 @@ mod derive_no_source {
     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
     #[redefined_attr(derive(Debug, Clone, PartialEq))]
     pub struct ComplexStructAA<'a, 'b> {
-        pub n:       i128,
+        pub n: i128,
         #[redefined(field((GenericLifetimeStructA, default)))]
         pub inner_a: GenericLifetimeStructA<'a, 'b>,
         #[redefined(field((BasicStructA, BasicStructARedefined)))]

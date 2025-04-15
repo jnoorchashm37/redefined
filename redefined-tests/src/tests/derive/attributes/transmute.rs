@@ -21,8 +21,8 @@ mod derive_transmute_source {
     #[redefined(GenericTypeStruct)]
     #[redefined_attr(transmute)]
     pub struct GenericTypeStructA<X, Y> {
-        pub p:    u64,
-        pub d:    X,
+        pub p: u64,
+        pub d: X,
         pub vals: Vec<Y>,
     }
 
@@ -55,7 +55,7 @@ mod derive_transmute_source {
     #[redefined(ComplexStructA)]
     #[redefined_attr(transmute)]
     pub struct ComplexStructAA<'a, 'b> {
-        pub n:       i128,
+        pub n: i128,
         pub inner_a: GenericLifetimeStructA<'a, 'b>,
         pub inner_b: Vec<BasicStructA>,
     }
@@ -84,8 +84,8 @@ mod derive_transmute_no_source {
     #[derive(Debug, Clone, PartialEq, Default, Redefined)]
     #[redefined_attr(transmute)]
     pub struct GenericTypeStructA<X, Y> {
-        pub p:    u64,
-        pub d:    X,
+        pub p: u64,
+        pub d: X,
         pub vals: Vec<Y>,
     }
 
@@ -114,6 +114,9 @@ mod derive_transmute_no_source {
 
     impl<'a, 'b> Default for GenericLifetimeStructA<'a, 'b> {
         fn default() -> Self {
+            // let t: std::mem::MaybeUninit<Vec<u128>> = std::mem::MaybeUninit::uninit();
+            // let f = t.as_mut_ptr();
+
             Self { p: &100, d: &[0; 10] }
         }
     }
@@ -129,7 +132,7 @@ mod derive_transmute_no_source {
     #[redefined_attr(derive(Debug, Clone, PartialEq))]
     #[redefined_attr(transmute)]
     pub struct ComplexStructAA<'a, 'b> {
-        pub n:       i128,
+        pub n: i128,
         #[redefined(field((GenericLifetimeStructA, default)))]
         pub inner_a: GenericLifetimeStructA<'a, 'b>,
         #[redefined(field((BasicStructA, default)))]
